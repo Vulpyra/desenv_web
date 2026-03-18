@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="dashboard">
+        <header class="top-bar">
+            <i class="fas fa-bars"></i>
+            <div class="top-icons">
+                <i class="far fa-eye"></i>
+                <i class="far fa-user-circle"></i>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <span class="label">Patrimônio</span>
+                <span class="value">R$ 127.528,75</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Renda Mensal</span>
+                <span class="value">R$ 14.789,50</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Renda declarada</span>
+                <span class="value">R$ 890 / R$ 1.300</span>
+            </div>
+        </section>
+
+        <section class="main-content">
+            <div class="chart-container">
+                <div class="pie-chart"></div>
+                <div class="chart-labels">
+                    <span class="label-left">Renda Não dedutível<br>55%</span>
+                    <span class="label-right">Renda dedutível<br>45%</span>
+                </div>
+            </div>
+
+            <div class="side-content">
+                <div class="ai-box">
+                    <div class="ai-header">
+                        <i class="fas fa-dollar-sign"></i>
+                        <h3>Sugestão da IA</h3>
+                    </div>
+                    <p>Invista R$ 500 em saúde e economize + R$ 1000 por mês de imposto</p>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-action"><i class="fas fa-plus"></i> Receita</button>
+                    <button class="btn-action"><i class="fas fa-plus"></i> Despesas</button>
+                </div>
+
+                <button class="btn-simulate">Novo Simulado</button>
+            </div>
+        </section>
+    </div>
+
+</body>
+</html>

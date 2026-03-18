@@ -1,0 +1,232 @@
+:root {
+    --page-bg: #242134;
+    --panel-bg: #2c2940;
+    --top-strip: #4a4863;
+    --stroke: #8f8ab8;
+    --card-bg: #8f8ab8;
+    --text-primary: #cec9eb;
+    --text-strong: #f0edff;
+    --btn-bg: #494663;
+    --pie-a: #9f99ca;
+    --pie-b: #7d779f;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--page-bg);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-primary);
+}
+
+.dashboard {
+    width: 920px;
+    background: var(--panel-bg);
+    border: 1px solid #5f5b7e;
+    border-radius: 2px;
+    padding: 10px 16px 14px;
+}
+
+.top-bar {
+    margin: -10px -16px 16px;
+    padding: 6px 10px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--stroke);
+    background: var(--top-strip);
+}
+
+.top-bar i {
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.top-icons {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    min-height: 80px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #a9a4cf;
+    background: var(--card-bg);
+    color: var(--text-strong);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.stat-card .label {
+    font-size: 1.8rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.stat-card .value {
+    margin-top: 4px;
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 700;
+    color: #d9d4f5;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 26px;
+    align-items: end;
+}
+
+.chart-container {
+    position: relative;
+    min-height: 182px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pie-chart {
+    width: 182px;
+    height: 182px;
+    border-radius: 50%;
+    background: conic-gradient(var(--pie-a) 0 45%, var(--pie-b) 45% 100%);
+}
+
+.chart-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #b7b2d9;
+}
+
+.label-left,
+.label-right {
+    position: absolute;
+    max-width: 120px;
+    line-height: 1.05;
+}
+
+.label-left {
+    left: -6px;
+    top: 54%;
+    transform: translateY(-50%);
+    text-align: left;
+}
+
+.label-right {
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: right;
+}
+
+.side-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ai-box {
+    border: 1px solid #9f9ac5;
+    border-radius: 14px;
+    padding: 10px 12px;
+    color: #d7d2f3;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.ai-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.ai-header h3 {
+    margin: 0;
+    font-size: 2.1rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.ai-header i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--stroke);
+    font-size: 0.9rem;
+}
+
+.ai-box p {
+    margin: 0;
+    font-size: 2rem;
+    line-height: 1.08;
+    font-weight: 700;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-action,
+.btn-simulate {
+    border: 1px solid #9f9ac5;
+    border-radius: 12px;
+    background: var(--btn-bg);
+    color: #bdb8dc;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-action {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-action i {
+    font-size: 1.05em;
+}
+
+.btn-simulate {
+    height: 52px;
+    background: #8f8ab8;
+    color: #cfcaeb;
+    font-size: 2.8rem;
+}
+
+.btn-action:hover,
+.btn-simulate:hover {
+    filter: brightness(1.06);
+}
