@@ -93,8 +93,8 @@ body {
     font-weight: bold;
 }
 
-.label-item.left { color: var(--chart-dark); text-align: left; }
-.label-item.right { color: var(--chart-light); text-align: right; }
+.label-item.left { color: var(--chart-light); text-align: left; }
+.label-item.right { color: var(--chart-dark); text-align: right; }
 
 .ai-suggestion-box {
     border: 2px solid var(--card-purple);
