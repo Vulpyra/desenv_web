@@ -1,19 +1,18 @@
-/* Definição da Identidade Visual Oficial */
 :root {
-    --bg-dark: #2d2a3d;
     --bg-body: #1a1825;
+    --bg-dark: #2d2a3d;
     --card-purple: #8b85b1;
     --text-main: #d1cfe2;
+    --white: #f0eff5;
     --chart-dark: #7a74a3;
     --chart-light: #a5a0d1;
-    --white: #f0eff5;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
 }
 
 body {
@@ -30,10 +29,8 @@ body {
     padding: 30px;
     border-radius: 8px;
     color: var(--text-main);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* Header */
 .top-bar {
     display: flex;
     justify-content: space-between;
@@ -47,10 +44,8 @@ body {
     gap: 25px;
 }
 
-#toggle-visibility { cursor: pointer; transition: 0.2s; }
-#toggle-visibility:hover { color: var(--text-main); }
+#toggle-visibility { cursor: pointer; }
 
-/* Grid de Cards */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -65,25 +60,20 @@ body {
     color: var(--white);
 }
 
-.stat-card .label { font-weight: 600; font-size: 1.1rem; display: block; }
+.stat-card .label { font-weight: 600; display: block; }
 .stat-card .value { font-size: 1.4rem; font-weight: bold; margin-top: 8px; display: block; }
 
-/* Privacidade (Efeito de Desfoque) */
 .value-hidden {
-    filter: blur(6px);
+    filter: blur(8px);
     user-select: none;
 }
 
-/* Layout Central */
 .main-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 50px;
-    align-items: flex-start;
+    align-items: center;
 }
-
-/* Gráfico */
-.chart-section { text-align: center; position: relative; }
 
 .pie-chart {
     width: 240px;
@@ -99,12 +89,13 @@ body {
 .chart-labels {
     display: flex;
     justify-content: space-between;
-    margin-top: 20px;
+    margin-top: 25px;
     font-weight: bold;
-    font-size: 0.9rem;
 }
 
-/* Sidebar e Ações */
+.label-item.left { color: var(--chart-dark); text-align: left; }
+.label-item.right { color: var(--chart-light); text-align: right; }
+
 .ai-suggestion-box {
     border: 2px solid var(--card-purple);
     border-radius: 25px;
@@ -122,7 +113,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 0.9rem;
 }
 
 .quick-actions { display: flex; gap: 15px; margin-bottom: 20px; }
@@ -136,7 +126,6 @@ body {
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 1rem;
 }
 
 .btn-main-action {
@@ -149,7 +138,4 @@ body {
     font-size: 1.6rem;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.3s;
 }
-
-.btn-main-action:hover { background-color: var(--card-purple); }
