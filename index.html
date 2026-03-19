@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro</title>
+    <title>Dashboard Financeiro Oficial - Atividade 03</title>
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -11,9 +11,9 @@
 
     <div class="dashboard">
         <header class="top-bar">
-            <i class="fas fa-bars"></i>
+            <i class="fas fa-bars menu-icon"></i>
             <div class="top-icons">
-                <i class="far fa-eye"></i>
+                <i class="far fa-eye" id="toggle-visibility" title="Ocultar valores"></i>
                 <i class="far fa-user-circle"></i>
             </div>
         </header>
@@ -21,45 +21,54 @@
         <section class="stats-grid">
             <div class="stat-card">
                 <span class="label">Patrimônio</span>
-                <span class="value">R$ 127.528,75</span>
+                <span class="value hide-value">R$ 127.528,75</span>
             </div>
             <div class="stat-card">
                 <span class="label">Renda Mensal</span>
-                <span class="value">R$ 14.789,50</span>
+                <span class="value hide-value">R$ 14.789,50</span>
             </div>
             <div class="stat-card">
                 <span class="label">Renda declarada</span>
-                <span class="value">R$ 890 / R$ 1.300</span>
+                <span class="value hide-value">R$ 890 / R$ 1.300</span>
             </div>
         </section>
 
         <section class="main-content">
-            <div class="chart-container">
+            <div class="chart-section">
                 <div class="pie-chart"></div>
                 <div class="chart-labels">
-                    <span class="label-left">Renda Não dedutível<br>55%</span>
-                    <span class="label-right">Renda dedutível<br>45%</span>
+                    <div class="label-item left">
+                        <p>Renda Não dedutível</p>
+                        <span>55%</span>
+                    </div>
+                    <div class="label-item right">
+                        <p>Renda dedutível</p>
+                        <span>45%</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="side-content">
-                <div class="ai-box">
+            <div class="sidebar-actions">
+                <div class="ai-suggestion-box">
                     <div class="ai-header">
-                        <i class="fas fa-dollar-sign"></i>
+                        <div class="icon-circle">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
                         <h3>Sugestão da IA</h3>
                     </div>
                     <p>Invista R$ 500 em saúde e economize + R$ 1000 por mês de imposto</p>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="btn-action"><i class="fas fa-plus"></i> Receita</button>
-                    <button class="btn-action"><i class="fas fa-plus"></i> Despesas</button>
+                <div class="quick-actions">
+                    <button class="btn-outline"><i class="fas fa-plus"></i> Receita</button>
+                    <button class="btn-outline"><i class="fas fa-plus"></i> Despesas</button>
                 </div>
 
-                <button class="btn-simulate">Novo Simulado</button>
+                <button class="btn-main-action">Novo Simulado</button>
             </div>
         </section>
     </div>
 
+    <script src="index.js"></script>
 </body>
 </html>
