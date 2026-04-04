@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const simBtn = document.getElementById('sim-btn');
     const toggleBtn = document.getElementById('toggle-visibility');
     const valuesToHide = document.querySelectorAll('.hide-value');
+
+    simBtn.addEventListener('click', () => {
+        window.location.href = 'src/pages/simulado/simulado.html';
+    });
 
     toggleBtn.addEventListener('click', () => {
         valuesToHide.forEach(el => {

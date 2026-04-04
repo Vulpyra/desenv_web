@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Financeiro Oficial - Atividade 03</title>
+    <title>Dashboard Financeiro Oficial - Atividade 05</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="colors.css">
+    <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -20,9 +22,10 @@
     </div>
 
     <div class="dashboard-shell">
+    <span class="particle-stream" aria-hidden="true"></span>
     <div class="dashboard">
         <header class="top-bar">
-            <i class="fas fa-bars menu-icon"></i>
+            <img class="menu-icon" src="images/icons/menu-symbol-of-three-parallel-lines-svgrepo-com-white.svg" alt="Menu">
             <div class="top-icons">
                 <i class="far fa-eye" id="toggle-visibility" title="Ocultar valores"></i>
                 <i class="far fa-user-circle"></i>
@@ -75,7 +78,7 @@
                     <button class="btn-outline"><i class="fas fa-plus"></i> Despesas</button>
                 </div>
 
-                <button class="btn-main-action">Novo Simulado</button>
+                <button class="btn-main-action" id="sim-btn">Novo Simulado</button>
             </div>
         </section>
     </div>
