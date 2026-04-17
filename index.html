@@ -11,7 +11,6 @@
     <link rel="shortcut icon" href="favicon.svg">
     <link rel="stylesheet" href="colors.css">
     <link rel="stylesheet" href="global.css">
-    <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -24,71 +23,148 @@
     </div>
 
     <div class="dashboard-shell">
-    <span class="particle-stream" aria-hidden="true"></span>
-    <div class="dashboard">
-        <header class="top-bar">
-            <div class="brand-mark" aria-label="Dashboard Financeiro">
-                <img class="brand-icon" src="favicon.svg" alt="Logo do site">
-                <span class="brand-text">Dashboard Financeiro</span>
-            </div>
-            <div class="top-icons">
-                <i class="far fa-eye" id="toggle-visibility" title="Ocultar valores"></i>
-                <i class="far fa-user-circle"></i>
-            </div>
-        </header>
-
-        <section class="stats-grid">
-            <div class="stat-card">
-                <span class="label">Patrimônio</span>
-                <span class="value hide-value">R$ 127.528,75</span>
-            </div>
-            <div class="stat-card">
-                <span class="label">Renda Mensal</span>
-                <span class="value hide-value">R$ 14.789,50</span>
-            </div>
-            <div class="stat-card">
-                <span class="label">Renda declarada</span>
-                <span class="value hide-value">R$ 890 / R$ 1.300</span>
-            </div>
-        </section>
-
-        <section class="main-content">
-            <div class="chart-section">
-                <div class="pie-chart"></div>
-                <div class="chart-labels">
-                    <div class="label-item left">
-                        <p>Renda não dedutível</p>
-                        <span>45%</span>
-                    </div>
-                    <div class="label-item right">
-                        <p>Renda dedutível</p>
-                        <span>55%</span>
-                    </div>
+        <span class="particle-stream" aria-hidden="true"></span>
+        
+        <div class="dashboard">
+            <header class="top-bar">
+                <div class="brand-mark" aria-label="Dashboard Financeiro">
+                    <img class="brand-icon" src="favicon.svg" alt="Logo do site">
+                    <span class="brand-text">Dashboard Financeiro</span>
                 </div>
-            </div>
+                <div class="top-icons">
+                    <i class="far fa-eye" id="toggle-visibility" title="Ocultar valores"></i>
+                    <i class="far fa-user-circle"></i>
+                </div>
+            </header>
 
-            <div class="sidebar-actions">
-                <div class="ai-suggestion-box">
-                    <div class="ai-header">
-                        <div class="icon-circle">
-                            <i class="fas fa-dollar-sign"></i>
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="card-header-actions">
+                        <span class="label">Patrimônio</span>
+                        <button class="btn-icon-edit" id="btn-edit-patrimonio" title="Editar Patrimônio"><i class="fas fa-pencil-alt"></i></button>
+                    </div>
+                    <span class="value hide-value" id="card-patrimonio">R$ 0,00</span>
+                </div>
+                <div class="stat-card">
+                    <div class="card-header-actions">
+                        <span class="label">Renda Mensal</span>
+                        <button class="btn-icon-edit" id="btn-add-renda-topo" title="Adicionar Renda"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <span class="value hide-value" id="card-renda">R$ 0,00</span>
+                </div>
+                <div class="stat-card">
+                    <div class="card-header-actions">
+                        <span class="label">Despesas Mensais</span>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn-icon-edit" id="btn-clear-despesas" title="Zerar Todas as Despesas" style="color: var(--danger-soft);"><i class="fas fa-trash-alt"></i></button>
+                            <button class="btn-icon-edit" id="btn-add-despesa-topo" title="Despesa Avulsa"><i class="fas fa-plus"></i></button>
                         </div>
-                        <h3>Sugestão da IA</h3>
                     </div>
-                    <p>Invista R$ 500 em saúde e economize + R$ 1000 por mês de imposto</p>
+                    <span class="value hide-value" id="card-despesa" style="color: var(--danger-soft);">R$ 0,00</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Renda declarada <span class="label-muted">(Limite Isenção)</span></span>
+                    <span class="value hide-value">R$ 890,00 <span class="value-max">/ R$ 1.300,00</span></span>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 68%;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="main-content">
+                <div class="glass-panel">
+                    <div class="chart-container" style="position: relative; height: 220px; width: 100%; margin: 0 auto;">
+                        <canvas id="rendaChart"></canvas>
+                    </div>
+                    <div class="chart-labels">
+                        <div class="label-item left">
+                            <p>Não dedutível</p>
+                            <span>45%</span>
+                        </div>
+                        <div class="label-item right">
+                            <p>Dedutível</p>
+                            <span>55%</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="quick-actions">
-                    <button class="btn-outline"><i class="fas fa-plus"></i> Receita</button>
-                    <button class="btn-outline"><i class="fas fa-plus"></i> Despesas</button>
+                <div class="glass-panel income-details">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Receitas e Despesas Fixas</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-add" id="btn-add-renda" title="Adicionar Renda"><i class="fas fa-plus"></i></button>
+                            <button class="btn-add" id="btn-add-despesa-fixa" title="Adicionar Despesa Fixa" style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.1);"><i class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <ul class="detail-list" id="lista-fixas"></ul>
                 </div>
 
-                <button class="btn-main-action" id="sim-btn">Novo Simulado</button>
+                <div class="sidebar-actions">
+                    <div class="ai-suggestion-box">
+                        <div class="ai-header">
+                            <div class="icon-circle"><i class="fas fa-dollar-sign"></i></div>
+                            <h3>Sugestão da IA</h3>
+                        </div>
+                        <p>Invista R$ 500 em saúde e economize + R$ 1000 por mês de imposto.</p>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="btn-outline" id="btn-quick-receita"><i class="fas fa-plus"></i> Receita</button>
+                        <button class="btn-outline" id="btn-quick-despesa"><i class="fas fa-plus"></i> Despesa Avulsa</button>
+                    </div>
+                    <button class="btn-main-action" id="sim-btn" style="margin-bottom: 12px;">Novo Simulado</button>
+                    <button class="btn-outline" id="btn-clear-all" style="width: 100%; color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.05);" title="Apagar todos os dados do sistema">
+                        <i class="fas fa-power-off"></i> Zerar Todo o Sistema
+                    </button>
+                </div>
+            </section>
+
+            <section class="bottom-content">
+                <div class="glass-panel evolution-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Evolução Patrimonial</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-add" id="btn-add-mes" title="Adicionar Mês"><i class="fas fa-plus"></i></button>
+                            <button class="btn-add" id="btn-clear-evolution" title="Limpar Gráfico" style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.1);"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="evolucaoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-panel goals-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Metas Financeiras</h3>
+                        <button class="btn-add" id="btn-add-meta" title="Adicionar Meta"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="lista-metas" style="display: flex; flex-direction: column; gap: 24px;"></div>
+                </div>
+
+                <div class="glass-panel transactions-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Transações Recentes</h3>
+                        <button class="btn-add" id="btn-clear-transactions" title="Limpar Histórico" style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.1);">
+                            <i class="fas fa-broom"></i>
+                        </button>
+                    </div>
+                    <ul class="transaction-list" id="lista-transacoes"></ul>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content">
+            <h3 class="panel-title" id="modal-title">Título</h3>
+            <div id="modal-body" class="modal-body"></div>
+            <div class="modal-actions">
+                <button id="modal-cancel" class="btn-outline" style="padding: 10px 20px;">Cancelar</button>
+                <button id="modal-confirm" class="btn-main-action" style="padding: 10px 20px; font-size: 1rem; width: auto;">Confirmar</button>
             </div>
-        </section>
-    </div>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="index.js"></script>
 </body>
 </html>
