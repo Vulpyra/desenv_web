@@ -271,18 +271,55 @@
 .goal-item {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .goal-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--text-soft);
-  margin-bottom: 8px;
+  align-items: center;
 }
 
-.goal-header span:last-child {
+.goal-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-title);
+}
+
+.goal-name i {
+  color: var(--accent-cyan);
+  font-size: 0.85rem;
+}
+
+.goal-values {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.goal-atual {
+  font-weight: 700;
+  color: var(--accent-cyan);
+  font-size: 1rem;
+}
+
+.goal-sep {
+  color: var(--text-soft);
+}
+
+.goal-alvo {
   color: var(--text-main);
+  font-weight: 600;
+}
+
+.goal-pct {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--text-soft);
   font-weight: 600;
 }
 
