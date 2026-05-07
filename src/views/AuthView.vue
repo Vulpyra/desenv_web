@@ -120,9 +120,8 @@ const handleSubmit = async () => {
 
         <button
           type="submit"
-          class="btn-main-action"
+          class="btn-main-action auth-submit"
           :disabled="isLoading"
-          style="margin-top: 8px"
         >
           <span v-if="isLoading">
             <i class="fas fa-spinner fa-spin" style="margin-right: 8px"></i>
@@ -141,98 +140,3 @@ const handleSubmit = async () => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.auth-shell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  width: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-  padding: 40px 36px;
-}
-
-.auth-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.auth-subtitle {
-  color: var(--text-soft);
-  font-size: 0.95rem;
-  margin-top: 6px;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.auth-error {
-  color: var(--danger-soft);
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 133, 153, 0.08);
-  border: 1px solid rgba(255, 133, 153, 0.2);
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
-.auth-success {
-  color: var(--accent-cyan);
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(120, 200, 231, 0.08);
-  border: 1px solid rgba(120, 200, 231, 0.2);
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
-.auth-toggle {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: 24px;
-  font-size: 0.9rem;
-  color: var(--text-soft);
-}
-
-.auth-toggle-btn {
-  background: none;
-  border: none;
-  color: var(--accent-cyan);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0;
-  transition: opacity 0.2s;
-}
-
-.auth-toggle-btn:hover {
-  opacity: 0.75;
-}
-
-.auth-toggle-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-main-action:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-</style>

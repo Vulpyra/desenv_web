@@ -80,23 +80,3 @@ const handleChangePhoto = () => {
   </div>
 </template>
 
-<style scoped>
-.profile-page {
-  padding: 24px;
-}
-
-.page-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: var(--text-primary);
-}
-
-.profile-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-</style>
