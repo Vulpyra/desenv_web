@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         salvarDados(); 
     }
 
-    //  BOTÃO DE ZERAR TUDO (SISTEMA COMPLETO) 
+    //  BOTÃO DE ZERAR TUDO (SISTEMA COMPLETO)
     document.getElementById('btn-clear-all')?.addEventListener('click', () => {
         if(confirm('ATENÇÃO: Você está prestes a apagar todos os dados. Deseja continuar?')) {
             localStorage.removeItem('dashboardData');
@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    //  BOOT DO SISTEMA 
+    // BOOT DO SISTEMA 
     carregarDados(); 
     renderizarListaFixas();
     renderizarMetas();
