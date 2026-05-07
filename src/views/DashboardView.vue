@@ -44,28 +44,28 @@ const onboardingSteps = computed(() => [
     bold: 'renda mensal',
     hint: '— clique aqui ou no + em "Renda Mensal"',
     done: rendas.value.length > 0,
-    action: openAddRenda
+    action: () => openAddRenda()
   },
   {
     label: 'Cadastre suas',
     bold: 'despesas fixas',
     hint: '(aluguel, planos, etc.)',
     done: despesas.value.length > 0,
-    action: openAddDespesaFixa
+    action: () => openAddDespesaFixa()
   },
   {
     label: 'Defina uma',
     bold: 'meta financeira',
     hint: 'para ter algo a perseguir',
     done: metas.value.length > 0,
-    action: openAddMeta
+    action: () => openAddMeta()
   },
   {
     label: 'Registre o',
     bold: 'patrimônio atual',
     hint: 'para acompanhar sua evolução',
     done: historico.value.labels.length > 0,
-    action: openAddHistorico
+    action: () => openAddHistorico()
   }
 ])
 
