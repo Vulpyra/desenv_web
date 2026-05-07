@@ -82,9 +82,17 @@ body {
 
 /* Progresso Renda Isenção */
 .label-muted { font-size: 0.75rem; color: var(--text-soft); font-weight: 400; margin-left: 4px; }
-.value-max { font-size: 1rem; color: var(--text-soft); font-weight: 500; }
+.value-max { font-size: 1rem; color: var(--text-soft); font-weight: 500; display: inline; white-space: nowrap; }
 .progress-container { width: 100%; height: 8px; background: rgba(186, 219, 246, 0.1); border-radius: 6px; margin-top: 14px; overflow: hidden; border: 1px solid rgba(130, 185, 230, 0.2); }
 .progress-bar { height: 100%; background: linear-gradient(90deg, var(--chart-a), var(--chart-b)); border-radius: 6px; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(113, 194, 217, 0.4); }
+
+/* Labels do Gráfico de Rosca */
+.chart-labels { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 0 8px; }
+.label-item { display: flex; flex-direction: column; gap: 4px; }
+.label-item.left { align-items: flex-start; }
+.label-item.right { align-items: flex-end; }
+.label-item p { font-size: 0.85rem; color: var(--text-soft); margin: 0; }
+.label-item span { font-size: 1.1rem; font-weight: 700; color: var(--text-title); }
 
 /* Painéis Glass (Reutilizável - Gráficos e Listas) */
 .glass-panel { background: rgba(66, 108, 171, 0.08); border: 1px solid rgba(130, 185, 230, 0.25); border-radius: 26px; padding: 28px; display: flex; flex-direction: column; backdrop-filter: blur(10px); }
@@ -167,10 +175,11 @@ body {
     .quick-actions { flex-direction: row; }
     .transactions-panel { grid-column: span 1; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .stat-card .value { font-size: 1.1rem; }
+    .value-max { font-size: 0.88rem; }
     .dashboard { padding: 20px; }
     .top-bar { font-size: 1.1rem; margin-bottom: 24px; }
     .panel-title { font-size: 1rem; }
-    .stat-card .value { font-size: 1.2rem; }
     .btn-main-action { font-size: 1.1rem; padding: 14px; }
 }
 @media (max-width: 550px) {
