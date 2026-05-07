@@ -7,7 +7,8 @@ export function useLocalStorage() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       return saved ? JSON.parse(saved) : null
-    } catch {
+    } catch (e) {
+      console.warn('localStorage unavailable, using memory fallback:', e)
       return null
     }
   }
@@ -16,7 +17,11 @@ export function useLocalStorage() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     } catch (e) {
-      console.error('Failed to save to localStorage:', e)
+      if (e.name === 'QuotaExceededError') {
+        console.error('localStorage quota exceeded. Data too large:', e)
+      } else {
+        console.error('Failed to save to localStorage:', e)
+      }
     }
   }
 

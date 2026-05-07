@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
 
 const props = defineProps({
@@ -13,6 +13,8 @@ const emit = defineEmits(['confirm', 'cancel'])
 const { maskCurrency, parseCurrency } = useCurrency()
 const inputValues = ref([])
 const inputRefs = ref([])
+const previouslyFocused = ref(null)
+const modalRef = ref(null)
 
 watch(() => props.fields, (newFields) => {
   inputValues.value = newFields.map(f => f.value || '')
@@ -20,11 +22,38 @@ watch(() => props.fields, (newFields) => {
 
 watch(() => props.isOpen, (open) => {
   if (open) {
+    previouslyFocused.value = document.activeElement
     nextTick(() => {
       const firstInput = document.querySelector('.modal-input')
       firstInput?.focus()
     })
+  } else if (previouslyFocused.value) {
+    previouslyFocused.value.focus()
+    previouslyFocused.value = null
   }
+})
+
+const handleKeydown = (e) => {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    cancel()
+  }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    const inputs = document.querySelectorAll('.modal-input')
+    const lastInput = inputs[inputs.length - 1]
+    if (document.activeElement === lastInput || inputs.length === 1) {
+      e.preventDefault()
+      confirm()
+    }
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
 })
 
 const setItemRef = (el, index) => {
@@ -56,9 +85,14 @@ const cancel = () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="cancel">
+  <div v-if="isOpen" ref="modalRef" class="modal-overlay" @click.self="cancel" role="dialog" aria-modal="true" :aria-label="title">
     <div class="glass-panel modal-content">
-      <h3 class="panel-title">{{ title }}</h3>
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+        <h3 class="panel-title" style="margin: 0">{{ title }}</h3>
+        <button class="btn-icon-edit" @click="cancel" aria-label="Fechar modal" title="Fechar (Esc)">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
       <div class="modal-body">
         <input
           v-for="(field, index) in fields"

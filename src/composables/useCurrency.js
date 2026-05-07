@@ -1,8 +1,10 @@
 export function useCurrency() {
   const formatCurrency = (value) => {
-    return 'R$ ' + value.toLocaleString('pt-BR', { 
+    const num = Number(value)
+    if (isNaN(num)) return 'R$ 0,00'
+    return 'R$ ' + num.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2 
+      maximumFractionDigits: 2
     })
   }
 

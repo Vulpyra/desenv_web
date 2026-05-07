@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
 
 const props = defineProps({
@@ -85,6 +85,13 @@ const initChart = () => {
 
 onMounted(initChart)
 watch(() => [props.labels, props.data], initChart, { deep: true })
+
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+})
 </script>
 
 <template>

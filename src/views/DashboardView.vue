@@ -17,8 +17,8 @@ import Modal from '@/components/Modal.vue'
 
 // Estado
 const { parseCurrency } = useCurrency()
-const { 
-  patrimonio, rendas, despesas, metas, transacoes, historico,
+const {
+  patrimonio, rendas, despesas, despesasAvulsas, metas, transacoes, historico,
   totalRenda, totalDespesa,
   load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addHistorico,
   removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll
@@ -39,27 +39,39 @@ const goToSimulado = () => {
 }
 
 // Handlers de Modal
-const handleConfirm = (values) => {
-  if (!values) return
-  
+const handleConfirm = (result) => {
+  if (!result?.confirmed || !result.values) return
+
+  const values = result.values
+  const nome = (val) => (typeof val === 'string' ? val.trim() : '')
+  const valor = (val) => (typeof val === 'number' && !isNaN(val) && val > 0 ? val : null)
+
   switch (modalAction.value) {
     case 'patrimonio':
-      patrimonio.value = values[0]
+      if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
+        patrimonio.value = values[0]
+      }
       break
     case 'renda':
-      if (values[0] && values[1]) addRenda(values[0], values[1])
+      if (nome(values[0]) && valor(values[1])) addRenda(nome(values[0]), valor(values[1]))
       break
     case 'despesaFixa':
-      if (values[0] && values[1]) addDespesaFixa(values[0], values[1])
+      if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]))
       break
     case 'despesaAvulsa':
-      if (values[0] && values[1]) addDespesaAvulsa(values[0], values[1])
+      if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]))
       break
-    case 'meta':
-      if (values[0] && values[1] && values[2]) addMeta(values[0], values[1], values[2])
+    case 'meta': {
+      const metaNome = nome(values[0])
+      const metaAlvo = valor(values[1])
+      const metaAtual = typeof values[2] === 'number' && !isNaN(values[2]) && values[2] >= 0 ? values[2] : 0
+      if (metaNome && metaAlvo !== null) addMeta(metaNome, metaAlvo, metaAtual)
       break
+    }
     case 'historico':
-      if (values[0] && values[1]) addHistorico(values[0], values[1])
+      if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
+        addHistorico(nome(values[0]), values[1])
+      }
       break
   }
   close()
@@ -116,30 +128,44 @@ const openAddHistorico = async () => {
   ])
 }
 
-// Confirmar limpar tudo
-const confirmClearAll = () => {
-  if (confirm('ATENÇÃO: Você está prestes a apagar todos os dados. Deseja continuar?')) {
+// Ações de confirmação usando modal
+const confirmClearAll = async () => {
+  modalAction.value = 'confirmClearAll'
+  const result = await open('ATENÇÃO', [
+    { placeholder: 'Digite EXCLUIR para confirmar' }
+  ])
+  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'EXCLUIR') {
     clearAll()
   }
 }
 
-// Confirmar limpar despesas
-const confirmClearDespesas = () => {
-  if (confirm('Tem certeza que deseja apagar TODAS as despesas (fixas e avulsas)?')) {
+const confirmClearDespesas = async () => {
+  modalAction.value = 'confirmClearDespesas'
+  const result = await open('Confirmar', [
+    { placeholder: 'Digite SIM para apagar todas as despesas' }
+  ])
+  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
     despesas.value = []
+    despesasAvulsas.value = []
   }
 }
 
-// Confirmar limpar transações
-const confirmClearTransacoes = () => {
-  if (confirm('Tem certeza que deseja limpar APENAS o histórico visual de transações?')) {
+const confirmClearTransacoes = async () => {
+  modalAction.value = 'confirmClearTransacoes'
+  const result = await open('Confirmar', [
+    { placeholder: 'Digite SIM para limpar transações' }
+  ])
+  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
     transacoes.value = []
   }
 }
 
-// Confirmar limpar histórico
-const confirmClearHistorico = () => {
-  if (confirm('Tem certeza que deseja limpar as linhas de Evolução Patrimonial?')) {
+const confirmClearHistorico = async () => {
+  modalAction.value = 'confirmClearHistorico'
+  const result = await open('Confirmar', [
+    { placeholder: 'Digite SIM para limpar histórico' }
+  ])
+  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
     historico.value = { labels: [], dados: [] }
   }
 }

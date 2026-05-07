@@ -8,9 +8,10 @@ const props = defineProps({
 
 const emit = defineEmits(['remove'])
 
-const porcentagem = computed(() => 
-  Math.min((props.meta.atual / props.meta.alvo) * 100, 100).toFixed(1)
-)
+const porcentagem = computed(() => {
+  if (!props.meta.alvo || props.meta.alvo <= 0) return '0.0'
+  return Math.min((props.meta.atual / props.meta.alvo) * 100, 100).toFixed(1)
+})
 </script>
 
 <template>
@@ -22,7 +23,7 @@ const porcentagem = computed(() =>
       </span>
       <div>
         <span :class="{ 'value-hidden': isHidden }">
-          R$ {{ meta.atual }} / R$ {{ meta.alvo }}
+          {{ formatCurrency(meta.atual) }} / {{ formatCurrency(meta.alvo) }}
         </span>
         <button class="btn-remove" @click="$emit('remove', meta.id)" style="margin-left: 5px">
           <i class="fas fa-times"></i>

@@ -2,6 +2,9 @@ import { ref, computed, watch } from 'vue'
 import { useLocalStorage } from './useLocalStorage'
 import { useCurrency } from './useCurrency'
 
+let idCounter = Date.now()
+const generateId = () => ++idCounter
+
 export function useDashboardData() {
   const { loadData, saveData, clearData } = useLocalStorage()
   const { formatCurrency } = useCurrency()
@@ -44,7 +47,7 @@ export function useDashboardData() {
     }
   }
 
-  // Salvar dados
+  // Salvar dados (flush: 'post' batches updates to reduce serialization cost)
   watch(
     [patrimonio, rendas, despesas, despesasAvulsas, metas, historico, transacoes],
     () => {
@@ -58,12 +61,12 @@ export function useDashboardData() {
         transacoes: transacoes.value
       })
     },
-    { deep: true }
+    { deep: true, flush: 'post' }
   )
 
   // Ações
   const addRenda = (nome, valor) => {
-    const id = Date.now()
+    const id = generateId()
     rendas.value.push({
       id,
       nome,
@@ -75,20 +78,20 @@ export function useDashboardData() {
   }
 
   const addDespesaFixa = (nome, valor) => {
-    const id = Date.now()
+    const id = generateId()
     despesas.value.push({ id, nome, valor, isFixa: true })
     addTransacao('despesa', nome, valor, id)
   }
 
   const addDespesaAvulsa = (nome, valor) => {
-    const id = Date.now()
+    const id = generateId()
     despesasAvulsas.value.push({ id, nome, valor, isFixa: false })
     addTransacao('despesa', nome, valor, id)
   }
 
   const addTransacao = (tipo, nome, valor, refId) => {
     transacoes.value.unshift({
-      id: Date.now(),
+      id: generateId(),
       tipo,
       nome,
       valor,
@@ -107,7 +110,7 @@ export function useDashboardData() {
 
   const addMeta = (nome, alvo, atual) => {
     metas.value.push({
-      id: Date.now(),
+      id: generateId(),
       nome,
       alvo,
       atual,

@@ -20,14 +20,14 @@ export function useModal() {
 
   const confirm = () => {
     if (resolvePromise.value) {
-      resolvePromise.value(inputValues.value)
+      resolvePromise.value({ confirmed: true, values: inputValues.value })
     }
     close()
   }
 
   const cancel = () => {
     if (resolvePromise.value) {
-      resolvePromise.value(null)
+      resolvePromise.value({ confirmed: false, values: null })
     }
     close()
   }
