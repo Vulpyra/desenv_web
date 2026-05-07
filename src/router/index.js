@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '../views/DashboardView.vue'
 import SimuladoView from '../views/SimuladoView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/simulado',
       name: 'simulado',
       component: SimuladoView,
+    },
+    {
+      path: '/perfil',
+      name: 'perfil',
+      component: ProfileView,
     },
   ],
 })

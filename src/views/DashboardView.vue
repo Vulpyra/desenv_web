@@ -38,6 +38,10 @@ const goToSimulado = () => {
   window.location.href = '/simulado'
 }
 
+const goToProfile = () => {
+  window.location.href = '/perfil'
+}
+
 // Handlers de Modal
 const handleConfirm = (result) => {
   if (!result?.confirmed || !result.values) return
@@ -197,7 +201,7 @@ onMounted(load)
             @click="toggleVisibilidade"
             title="Ocultar/Exibir valores"
           ></i>
-          <i class="far fa-user-circle"></i>
+          <i class="far fa-user-circle" @click="goToProfile" title="Meu Perfil" style="cursor: pointer"></i>
         </div>
       </header>
 
