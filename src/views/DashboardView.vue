@@ -30,7 +30,7 @@ const {
   clearDespesas, clearTransacoes, clearHistorico
 } = useDashboardData()
 
-const { isOpen, title, fields, open, close } = useModal()
+const { isOpen, title, fields, message, open, close } = useModal()
 
 // Visibilidade dos valores
 const valoresOcultos = ref(false)
@@ -144,16 +144,16 @@ const handleConfirm = (values) => {
       }
       break
     case 'confirmClearAll':
-      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'EXCLUIR') clearAll()
+      clearAll()
       break
     case 'confirmClearDespesas':
-      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'SIM') clearDespesas()
+      clearDespesas()
       break
     case 'confirmClearTransacoes':
-      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'SIM') clearTransacoes()
+      clearTransacoes()
       break
     case 'confirmClearHistorico':
-      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'SIM') clearHistorico()
+      clearHistorico()
       break
   }
   close()
@@ -228,22 +228,22 @@ const openAddHistorico = () => {
 // Ações de confirmação usando modal
 const confirmClearAll = () => {
   modalAction.value = 'confirmClearAll'
-  open('ATENÇÃO', [{ placeholder: 'Digite EXCLUIR para confirmar' }])
+  open('Zerar sistema', [], 'Deseja realmente apagar todos os dados? Esta ação não pode ser desfeita.')
 }
 
 const confirmClearDespesas = () => {
   modalAction.value = 'confirmClearDespesas'
-  open('Confirmar', [{ placeholder: 'Digite SIM para apagar todas as despesas' }])
+  open('Apagar despesas', [], 'Deseja realmente apagar todas as despesas?')
 }
 
 const confirmClearTransacoes = () => {
   modalAction.value = 'confirmClearTransacoes'
-  open('Confirmar', [{ placeholder: 'Digite SIM para limpar transações' }])
+  open('Limpar transações', [], 'Deseja realmente limpar o histórico de transações?')
 }
 
 const confirmClearHistorico = () => {
   modalAction.value = 'confirmClearHistorico'
-  open('Confirmar', [{ placeholder: 'Digite SIM para limpar histórico' }])
+  open('Limpar gráfico', [], 'Deseja realmente limpar o histórico de evolução patrimonial?')
 }
 
 onMounted(load)
@@ -383,6 +383,7 @@ onMounted(load)
     :is-open="isOpen"
     :title="title"
     :fields="fields"
+    :message="message"
     @confirm="handleConfirm"
     @cancel="close"
   />

@@ -5,7 +5,8 @@ import { useCurrency } from '@/composables/useCurrency'
 const props = defineProps({
   isOpen: Boolean,
   title: String,
-  fields: Array
+  fields: Array,
+  message: String
 })
 
 const emit = defineEmits(['confirm', 'cancel'])
@@ -39,6 +40,11 @@ const handleKeydown = (e) => {
     cancel()
   }
   if (e.key === 'Enter' && !e.shiftKey) {
+    if (props.message) {
+      e.preventDefault()
+      confirm()
+      return
+    }
     const inputs = document.querySelectorAll('.modal-input')
     const lastInput = inputs[inputs.length - 1]
     if (document.activeElement === lastInput || inputs.length === 1) {
@@ -70,6 +76,10 @@ const handleInput = (event, index) => {
 }
 
 const confirm = () => {
+  if (props.message) {
+    emit('confirm', [])
+    return
+  }
   const values = inputValues.value.map((val, i) => {
     if (props.fields[i].isCurrency) {
       return parseCurrency(val)
@@ -95,7 +105,8 @@ const cancel = () => {
         </button>
       </div>
       <div class="modal-body">
-        <template v-for="(field, index) in fields" :key="index">
+        <p v-if="message" class="modal-message">{{ message }}</p>
+        <template v-else v-for="(field, index) in fields" :key="index">
           <select
             v-if="field.options"
             :ref="(el) => setItemRef(el, index)"
