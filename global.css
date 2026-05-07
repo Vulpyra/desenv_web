@@ -108,8 +108,9 @@ body {
 .btn-remove:hover { opacity: 1; transform: scale(1.1); }
 
 /* Grids do Meio e de Baixo */
-.main-content { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 30px; align-items: stretch; }
-.bottom-content { display: grid; grid-template-columns: 1.8fr 1.1fr 1.1fr; gap: 30px; margin-top: 30px; }
+.main-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 30px; align-items: stretch; }
+.bottom-content { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 1.1fr); gap: 30px; margin-top: 30px; }
+.main-content > *, .bottom-content > * { min-width: 0; }
 .chart-container { position: relative; width: 100%; }
 
 /* Listas (Renda e Metas) */
@@ -163,24 +164,13 @@ body {
     body { align-items: center; }
 }
 
-/* 2 colunas: janela entre 750px e 1400px */
+/* ≤ 1400px: tudo em 1 coluna */
 @media (max-width: 1400px) {
-    .main-content { grid-template-columns: 1fr 1fr; }
-    .sidebar-actions { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-    .ai-suggestion-box { grid-column: span 2; margin-bottom: 0; }
-    .quick-actions { grid-column: span 1; margin-bottom: 0; flex-direction: column; gap: 10px; }
-    .btn-main-action { grid-column: span 1; margin-bottom: 0 !important; }
-    #btn-clear-all { grid-column: span 2; }
-    .bottom-content { grid-template-columns: 1fr 1fr; }
-    .transactions-panel { grid-column: span 2; }
-}
-
-/* 1 coluna: janela até 1000px */
-@media (max-width: 1000px) {
     body { padding: 16px; }
+    .dashboard { padding: 20px; }
     .main-content { grid-template-columns: 1fr; gap: 20px; }
     .bottom-content { grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
-    .sidebar-actions { display: flex; flex-direction: column; gap: 16px; grid-column: span 1; }
+    .sidebar-actions { display: flex; flex-direction: column; gap: 16px; }
     .ai-suggestion-box { margin-bottom: 0; }
     .quick-actions { flex-direction: row; margin-bottom: 0; }
     .btn-main-action { margin-bottom: 0 !important; }
@@ -188,7 +178,6 @@ body {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .stat-card .value { font-size: 1.1rem; }
     .value-max { font-size: 0.88rem; }
-    .dashboard { padding: 20px; }
     .top-bar { font-size: 1.1rem; margin-bottom: 24px; }
     .panel-title { font-size: 1rem; }
     .btn-main-action { font-size: 1.1rem; padding: 14px; }
