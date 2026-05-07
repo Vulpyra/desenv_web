@@ -74,7 +74,8 @@ const confirm = () => {
     if (props.fields[i].isCurrency) {
       return parseCurrency(val)
     }
-    return val.trim()
+    if (typeof val === 'string') return val.trim()
+    return val
   })
   emit('confirm', values)
 }
@@ -94,16 +95,28 @@ const cancel = () => {
         </button>
       </div>
       <div class="modal-body">
-        <input
-          v-for="(field, index) in fields"
-          :key="index"
-          :ref="(el) => setItemRef(el, index)"
-          v-model="inputValues[index]"
-          type="text"
-          :placeholder="field.placeholder"
-          class="modal-input"
-          @input="handleInput($event, index)"
-        />
+        <template v-for="(field, index) in fields" :key="index">
+          <select
+            v-if="field.options"
+            :ref="(el) => setItemRef(el, index)"
+            v-model="inputValues[index]"
+            class="modal-input modal-select"
+          >
+            <option value="" disabled>{{ field.placeholder }}</option>
+            <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <input
+            v-else
+            :ref="(el) => setItemRef(el, index)"
+            v-model="inputValues[index]"
+            type="text"
+            :placeholder="field.placeholder"
+            class="modal-input"
+            @input="handleInput($event, index)"
+          />
+        </template>
       </div>
       <div class="modal-actions">
         <button class="btn-outline" style="padding: 10px 20px" @click="cancel">

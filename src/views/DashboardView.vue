@@ -202,10 +202,25 @@ const openAddMeta = () => {
   ])
 }
 
+const MESES = [
+  { value: 'Jan', label: 'Janeiro' },
+  { value: 'Fev', label: 'Fevereiro' },
+  { value: 'Mar', label: 'Março' },
+  { value: 'Abr', label: 'Abril' },
+  { value: 'Mai', label: 'Maio' },
+  { value: 'Jun', label: 'Junho' },
+  { value: 'Jul', label: 'Julho' },
+  { value: 'Ago', label: 'Agosto' },
+  { value: 'Set', label: 'Setembro' },
+  { value: 'Out', label: 'Outubro' },
+  { value: 'Nov', label: 'Novembro' },
+  { value: 'Dez', label: 'Dezembro' },
+]
+
 const openAddHistorico = () => {
   modalAction.value = 'historico'
   open('Adicionar Evolução', [
-    { placeholder: 'Mês (ex: Abr)' },
+    { placeholder: 'Selecione o mês', options: MESES },
     { placeholder: 'Patrimônio no mês', isCurrency: true }
   ])
 }
