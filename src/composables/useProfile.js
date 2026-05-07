@@ -28,19 +28,13 @@ export function useProfile() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [{ data: profileData }, { data: prefData }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('preferencias').select('*').eq('usuario_id', user.id).single()
-      ])
+      const { data: profileData } = await supabase
+        .from('profiles').select('*').eq('id', user.id).single()
 
       if (profileData) {
         profile.value = { ...profileData, email: user.email }
       } else {
         profile.value = { ...DEFAULT_PROFILE, email: user.email, criado_em: user.created_at }
-      }
-
-      if (prefData) {
-        preferences.value = prefData
       }
     } catch (err) {
       error.value = err.message
@@ -56,12 +50,13 @@ export function useProfile() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { success: false }
 
+      const { nome, avatar_url } = data
       const { error: err } = await supabase
         .from('profiles')
-        .upsert({ id: user.id, ...data, atualizado_em: new Date().toISOString() })
+        .upsert({ id: user.id, nome, avatar_url, atualizado_em: new Date().toISOString() })
 
       if (err) throw err
-      profile.value = { ...profile.value, ...data }
+      profile.value = { ...profile.value, nome, avatar_url }
       return { success: true }
     } catch (err) {
       error.value = err.message
@@ -71,36 +66,14 @@ export function useProfile() {
     }
   }
 
-  const updatePreferences = async (data) => {
-    isLoading.value = true
-    error.value = null
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return { success: false }
-
-      const { error: err } = await supabase
-        .from('preferencias')
-        .upsert({ usuario_id: user.id, ...data })
-
-      if (err) throw err
-      preferences.value = { ...preferences.value, ...data }
-      return { success: true }
-    } catch (err) {
-      error.value = err.message
-      return { success: false, error: err.message }
-    } finally {
-      isLoading.value = false
-    }
+  const updatePreferences = (data) => {
+    preferences.value = { ...preferences.value, ...data }
+    return { success: true }
   }
 
   const saveAll = async () => {
-    const [resProfile, resPref] = await Promise.all([
-      updateProfile(profile.value),
-      updatePreferences(preferences.value)
-    ])
-    if (!resProfile.success || !resPref.success) {
-      return { success: false, error: error.value }
-    }
+    const res = await updateProfile(profile.value)
+    if (!res.success) return { success: false, error: error.value }
     return { success: true }
   }
 

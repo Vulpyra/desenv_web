@@ -10,7 +10,7 @@ defineProps({
   },
   createdAt: {
     type: String,
-    required: true
+    default: null
   },
   avatar: {
     type: String,
@@ -36,7 +36,7 @@ defineEmits(['change-photo'])
       <div class="profile-info">
         <h2>{{ name }}</h2>
         <p class="email">{{ email }}</p>
-        <p class="member-since">Membro desde {{ createdAt }}</p>
+        <p class="member-since" v-if="createdAt">Membro desde {{ createdAt }}</p>
       </div>
     </div>
   </section>
