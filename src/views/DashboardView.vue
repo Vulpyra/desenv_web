@@ -21,7 +21,7 @@ const router = useRouter()
 const { signOut } = useAuth()
 
 // Estado
-const { parseCurrency } = useCurrency()
+const { parseCurrency, formatCurrency } = useCurrency()
 const {
   patrimonio, rendas, despesas, despesasAvulsas, metas, transacoes, historico,
   totalRenda, totalDespesa, error: dashError,
