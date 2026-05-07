@@ -23,3 +23,9 @@ export { default as GoalItem } from './goals/GoalItem.vue'
 // Transactions
 export { default as TransactionsPanel } from './transactions/TransactionsPanel.vue'
 export { default as TransactionItem } from './transactions/TransactionItem.vue'
+
+// Profile
+export { default as ProfileHeader } from './profile/ProfileHeader.vue'
+export { default as ProfileInfoCard } from './profile/ProfileInfoCard.vue'
+export { default as ProfilePreferences } from './profile/ProfilePreferences.vue'
+export { default as ProfileActions } from './profile/ProfileActions.vue'
