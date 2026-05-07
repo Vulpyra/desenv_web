@@ -35,17 +35,45 @@ const { isOpen, title, fields, open, close } = useModal()
 // Visibilidade dos valores
 const valoresOcultos = ref(false)
 
-// Onboarding: detecta se é primeiro acesso
-const isFirstAccess = computed(() =>
-  rendas.value.length === 0 &&
-  despesas.value.length === 0 &&
-  despesasAvulsas.value.length === 0 &&
-  metas.value.length === 0
-)
+// Onboarding
+const onboardingDismissed = ref(false)
+
+const onboardingSteps = computed(() => [
+  {
+    label: 'Adicione sua',
+    bold: 'renda mensal',
+    hint: '— clique aqui ou no + em "Renda Mensal"',
+    done: rendas.value.length > 0,
+    action: openAddRenda
+  },
+  {
+    label: 'Cadastre suas',
+    bold: 'despesas fixas',
+    hint: '(aluguel, planos, etc.)',
+    done: despesas.value.length > 0,
+    action: openAddDespesaFixa
+  },
+  {
+    label: 'Defina uma',
+    bold: 'meta financeira',
+    hint: 'para ter algo a perseguir',
+    done: metas.value.length > 0,
+    action: openAddMeta
+  },
+  {
+    label: 'Registre o',
+    bold: 'patrimônio atual',
+    hint: 'para acompanhar sua evolução',
+    done: historico.value.labels.length > 0,
+    action: openAddHistorico
+  }
+])
+
+const allStepsDone = computed(() => onboardingSteps.value.every(s => s.done))
+const showOnboarding = computed(() => !onboardingDismissed.value && !allStepsDone.value)
 
 // Sugestão dinâmica baseada nos dados reais
 const aiSuggestion = computed(() => {
-  if (isFirstAccess.value) return 'Comece adicionando sua renda mensal para ver análises personalizadas.'
   const saldoAtual = totalRenda.value - totalDespesa.value
   if (totalRenda.value === 0) return 'Adicione sua primeira fonte de renda para começar.'
   const pct = totalDespesa.value / totalRenda.value
@@ -241,32 +269,34 @@ onMounted(load)
         </div>
       </header>
 
-      <!-- Banner de onboarding (primeiro acesso) -->
-      <div v-if="isFirstAccess" class="onboarding-banner">
-        <div class="onboarding-steps">
+      <!-- Banner de onboarding -->
+      <div v-if="showOnboarding" class="onboarding-banner">
+        <div class="onboarding-header">
           <div class="onboarding-title">
-            <i class="fas fa-hand-wave"></i>
+            <i class="fas fa-rocket"></i>
             Bem-vindo ao Renda Fácil! Siga os passos para começar:
           </div>
-          <ol class="onboarding-list">
-            <li @click="openAddRenda">
-              <span class="step-num">1</span>
-              <span>Adicione sua <strong>renda mensal</strong> — clique aqui ou no <i class="fas fa-plus"></i> em "Renda Mensal"</span>
-            </li>
-            <li @click="openAddDespesaFixa">
-              <span class="step-num">2</span>
-              <span>Cadastre suas <strong>despesas fixas</strong> (aluguel, planos, etc.)</span>
-            </li>
-            <li @click="openAddMeta">
-              <span class="step-num">3</span>
-              <span>Defina uma <strong>meta financeira</strong> para ter algo a perseguir</span>
-            </li>
-            <li @click="openAddHistorico">
-              <span class="step-num">4</span>
-              <span>Registre o <strong>patrimônio atual</strong> para acompanhar sua evolução</span>
-            </li>
-          </ol>
+          <button class="onboarding-dismiss" @click="onboardingDismissed = true" title="Dispensar">
+            Dispensar <i class="fas fa-times"></i>
+          </button>
         </div>
+        <ol class="onboarding-list">
+          <li
+            v-for="(step, i) in onboardingSteps"
+            :key="i"
+            :class="{ 'step-done': step.done }"
+            @click="!step.done && step.action()"
+          >
+            <span class="step-num">
+              <i v-if="step.done" class="fas fa-check"></i>
+              <span v-else>{{ i + 1 }}</span>
+            </span>
+            <span>
+              {{ step.label }} <strong>{{ step.bold }}</strong> {{ step.hint }}
+            </span>
+            <i v-if="!step.done" class="fas fa-chevron-right step-arrow"></i>
+          </li>
+        </ol>
       </div>
 
       <!-- Cards de estatísticas -->
