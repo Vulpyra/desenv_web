@@ -664,281 +664,151 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-scene" aria-hidden="true">
-    <span class="glow orb-a"></span>
-    <span class="glow orb-b"></span>
-    <span class="glow orb-c"></span>
-    <span class="noise-layer"></span>
-  </div>
-
-  <div class="dashboard-shell">
-    <span class="particle-stream" aria-hidden="true"></span>
-
-    <div class="dashboard">
-      <header class="top-bar">
-        <div class="brand-mark" aria-label="Dashboard Financeiro">
-          <span class="brand-text">Dashboard Financeiro</span>
-        </div>
-        <div class="top-icons">
-          <i
-            class="far fa-eye"
-            id="toggle-visibility"
-            title="Ocultar valores"
-          ></i>
-          <i class="far fa-user-circle"></i>
-        </div>
-      </header>
-
-      <section class="stats-grid">
-        <div class="stat-card">
-          <div class="card-header-actions">
-            <span class="label">Patrimônio</span>
-            <button
-              class="btn-icon-edit"
-              id="btn-edit-patrimonio"
-              title="Editar Patrimônio"
-            >
-              <i class="fas fa-pencil-alt"></i>
-            </button>
-          </div>
-          <span class="value hide-value" id="card-patrimonio">R$ 0,00</span>
-        </div>
-        <div class="stat-card">
-          <div class="card-header-actions">
-            <span class="label">Renda Mensal</span>
-            <button
-              class="btn-icon-edit"
-              id="btn-add-renda-topo"
-              title="Adicionar Renda"
-            >
-              <i class="fas fa-plus"></i>
-            </button>
-          </div>
-          <span class="value hide-value" id="card-renda">R$ 0,00</span>
-        </div>
-        <div class="stat-card">
-          <div class="card-header-actions">
-            <span class="label">Despesas Mensais</span>
-            <div style="display: flex; gap: 4px">
-              <button
-                class="btn-icon-edit"
-                id="btn-clear-despesas"
-                title="Zerar Todas as Despesas"
-                style="color: var(--danger-soft)"
-              >
-                <i class="fas fa-trash-alt"></i>
-              </button>
-              <button
-                class="btn-icon-edit"
-                id="btn-add-despesa-topo"
-                title="Despesa Avulsa"
-              >
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
-          </div>
-          <span
-            class="value hide-value"
-            id="card-despesa"
-            style="color: var(--danger-soft)"
-            >R$ 0,00</span
-          >
-        </div>
-        <div class="stat-card">
-          <span class="label"
-            >Renda declarada
-            <span class="label-muted">(Limite Isenção)</span></span
-          >
-          <span class="value hide-value"
-            >R$ 890,00 <span class="value-max">/ R$ 1.300,00</span></span
-          >
-          <div class="progress-container">
-            <div class="progress-bar" style="width: 68%"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="main-content">
-        <div class="glass-panel">
-          <div
-            class="chart-container"
-            style="
-              position: relative;
-              height: 220px;
-              width: 100%;
-              margin: 0 auto;
-            "
-          >
-            <canvas id="rendaChart"></canvas>
-          </div>
-          <div class="chart-labels">
-            <div class="label-item left">
-              <p>Não dedutível</p>
-              <span>45%</span>
-            </div>
-            <div class="label-item right">
-              <p>Dedutível</p>
-              <span>55%</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-panel income-details">
-          <div class="panel-header">
-            <h3 class="panel-title">Receitas e Despesas Fixas</h3>
-            <div style="display: flex; gap: 8px">
-              <button
-                class="btn-add"
-                id="btn-add-renda"
-                title="Adicionar Renda"
-              >
-                <i class="fas fa-plus"></i>
-              </button>
-              <button
-                class="btn-add"
-                id="btn-add-despesa-fixa"
-                title="Adicionar Despesa Fixa"
-                style="
-                  color: var(--danger-soft);
-                  border-color: rgba(255, 133, 153, 0.3);
-                  background: rgba(255, 133, 153, 0.1);
-                "
-              >
-                <i class="fas fa-minus"></i>
-              </button>
-            </div>
-          </div>
-          <ul class="detail-list" id="lista-fixas"></ul>
-        </div>
-
-        <div class="sidebar-actions">
-          <div class="ai-suggestion-box">
-            <div class="ai-header">
-              <div class="icon-circle"><i class="fas fa-dollar-sign"></i></div>
-              <h3>Sugestão da IA</h3>
-            </div>
-            <p>
-              Invista R$ 500 em saúde e economize + R$ 1000 por mês de imposto.
-            </p>
-          </div>
-          <div class="quick-actions">
-            <button class="btn-outline" id="btn-quick-receita">
-              <i class="fas fa-plus"></i> Receita
-            </button>
-            <button class="btn-outline" id="btn-quick-despesa">
-              <i class="fas fa-plus"></i> Despesa Avulsa
-            </button>
-          </div>
-          <button
-            class="btn-main-action"
-            id="sim-btn"
-            style="margin-bottom: 12px"
-          >
-            Novo Simulado
-          </button>
-          <button
-            class="btn-outline"
-            id="btn-clear-all"
-            style="
-              width: 100%;
-              color: var(--danger-soft);
-              border-color: rgba(255, 133, 153, 0.3);
-              background: rgba(255, 133, 153, 0.05);
-            "
-            title="Apagar todos os dados do sistema"
-          >
-            <i class="fas fa-power-off"></i> Zerar Todo o Sistema
-          </button>
-        </div>
-      </section>
-
-      <section class="bottom-content">
-        <div class="glass-panel evolution-panel">
-          <div class="panel-header">
-            <h3 class="panel-title">Evolução Patrimonial</h3>
-            <div style="display: flex; gap: 8px">
-              <button class="btn-add" id="btn-add-mes" title="Adicionar Mês">
-                <i class="fas fa-plus"></i>
-              </button>
-              <button
-                class="btn-add"
-                id="btn-clear-evolution"
-                title="Limpar Gráfico"
-                style="
-                  color: var(--danger-soft);
-                  border-color: rgba(255, 133, 153, 0.3);
-                  background: rgba(255, 133, 153, 0.1);
-                "
-              >
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>
-          </div>
-          <div
-            class="chart-container"
-            style="position: relative; height: 250px; width: 100%"
-          >
-            <canvas id="evolucaoChart"></canvas>
-          </div>
-        </div>
-
-        <div class="glass-panel goals-panel">
-          <div class="panel-header">
-            <h3 class="panel-title">Metas Financeiras</h3>
-            <button class="btn-add" id="btn-add-meta" title="Adicionar Meta">
-              <i class="fas fa-plus"></i>
-            </button>
-          </div>
-          <div
-            id="lista-metas"
-            style="display: flex; flex-direction: column; gap: 24px"
-          ></div>
-        </div>
-
-        <div class="glass-panel transactions-panel">
-          <div class="panel-header">
-            <h3 class="panel-title">Transações Recentes</h3>
-            <button
-              class="btn-add"
-              id="btn-clear-transactions"
-              title="Limpar Histórico"
-              style="
-                color: var(--danger-soft);
-                border-color: rgba(255, 133, 153, 0.3);
-                background: rgba(255, 133, 153, 0.1);
-              "
-            >
-              <i class="fas fa-broom"></i>
-            </button>
-          </div>
-          <ul class="transaction-list" id="lista-transacoes"></ul>
-        </div>
-      </section>
+    <div class="bg-scene" aria-hidden="true">
+        <span class="glow orb-a"></span>
+        <span class="glow orb-b"></span>
+        <span class="glow orb-c"></span>
+        <span class="noise-layer"></span>
     </div>
-  </div>
 
-  <div id="custom-modal" class="modal-overlay hidden">
-    <div class="glass-panel modal-content">
-      <h3 class="panel-title" id="modal-title">Título</h3>
-      <div id="modal-body" class="modal-body"></div>
-      <div class="modal-actions">
-        <button
-          id="modal-cancel"
-          class="btn-outline"
-          style="padding: 10px 20px"
-        >
-          Cancelar
-        </button>
-        <button
-          id="modal-confirm"
-          class="btn-main-action"
-          style="padding: 10px 20px; font-size: 1rem; width: auto"
-        >
-          Confirmar
-        </button>
-      </div>
+    <div class="dashboard-shell">
+        <span class="particle-stream" aria-hidden="true"></span>
+        
+        <div class="dashboard">
+            <header class="top-bar">
+                <!-- LOGO REMOVIDA AQUI -->
+                <div class="brand-mark" aria-label="Dashboard Financeiro">
+                    <span class="brand-text">Dashboard Financeiro</span>
+                </div>
+                <div class="top-icons">
+                    <i class="fas fa-eye" id="toggle-visibility" title="Ocultar valores"></i>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <!-- NOVO GRID EM 3 COLUNAS BASEADO NO WIREFRAME -->
+            <div class="dashboard-grid">
+                
+                <!-- COLUNA 1: ESQUERDA -->
+                <div class="grid-col left-col">
+                    <div class="stat-card">
+                        <div class="card-header-actions">
+                            <span class="label">Patrimônio</span>
+                            <button class="btn-icon-edit" id="btn-edit-patrimonio" title="Editar Patrimônio"><i class="fas fa-pencil-alt"></i></button>
+                        </div>
+                        <span class="value hide-value" id="card-patrimonio">R$ 0,00</span>
+                    </div>
+
+                    <div class="glass-panel evolution-panel" style="flex-grow: 1;">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Evolução Patrimonial</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-add" id="btn-add-mes" title="Adicionar Mês"><i class="fas fa-plus"></i></button>
+                                <button class="btn-add" id="btn-clear-evolution" title="Limpar Gráfico" style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.1);"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 100%; min-height: 400px; width: 100%;">
+                            <canvas id="evolucaoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA 2: MEIO -->
+                <div class="grid-col mid-col">
+                    <div class="stat-card">
+                        <span class="label">Renda declarada <span class="label-muted">(Limite Isenção)</span></span>
+                        <span class="value hide-value">R$ 890,00 <span class="value-max">/ R$ 1.300,00</span></span>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 68%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel">
+                        <div class="chart-container" style="position: relative; height: 220px; width: 100%; margin: 0 auto;">
+                            <canvas id="rendaChart"></canvas>
+                        </div>
+                        <div class="chart-labels">
+                            <div class="label-item left">
+                                <p>Não dedutível</p>
+                                <span>45%</span>
+                            </div>
+                            <div class="label-item right">
+                                <p>Dedutível</p>
+                                <span>55%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel income-details" style="flex-grow: 1;">
+                        <div class="panel-header">
+                            <!-- NOME ALTERADO AQUI (Sem a palavra "Fixas") -->
+                            <h3 class="panel-title">Receitas e Despesas</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-add" id="btn-add-renda" title="Adicionar Renda"><i class="fas fa-plus"></i></button>
+                                <button class="btn-add" id="btn-add-despesa-fixa" title="Adicionar Despesa" style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.1);"><i class="fas fa-minus"></i></button>
+                            </div>
+                        </div>
+                        <ul class="detail-list" id="lista-fixas"></ul>
+                    </div>
+                </div>
+
+                <!-- COLUNA 3: DIREITA -->
+                <div class="grid-col right-col">
+                    <div class="ai-suggestion-box" style="margin-bottom: 0;">
+                        <div class="ai-header">
+                            <div class="icon-circle"><i class="fas fa-dollar-sign"></i></div>
+                            <h3>Sugestão da IA</h3>
+                        </div>
+                        <p>Invista R$ 500 em saúde e economize + R$ 1000 por mês de imposto.</p>
+                    </div>
+
+                    <!-- BOTÕES DE RECEITA/DESPESA AVULSA REMOVIDOS DAQUI -->
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button class="btn-main-action" id="sim-btn">Novo Simulado</button>
+                        <button class="btn-outline" id="btn-clear-all" style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.05);" title="Apagar todos os dados do sistema">
+                            <i class="fas fa-power-off"></i> Zerar Todo o Sistema
+                        </button>
+                    </div>
+
+                    <div class="glass-panel goals-panel" style="flex-grow: 1;">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Metas Financeiras</h3>
+                            <button class="btn-add" id="btn-add-meta" title="Adicionar Meta"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="lista-metas" style="display: flex; flex-direction: column; gap: 24px;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ÁREA OCULTA: Mantém o JS funcionando sem mostrar na tela -->
+            <div style="display: none;">
+                <span class="value" id="card-renda">R$ 0,00</span>
+                <span class="value" id="card-despesa">R$ 0,00</span>
+                <ul class="transaction-list" id="lista-transacoes"></ul>
+                <button id="btn-add-renda-topo"></button>
+                <button id="btn-clear-despesas"></button>
+                <button id="btn-add-despesa-topo"></button>
+                <button id="btn-quick-receita"></button>
+                <button id="btn-quick-despesa"></button>
+                <button id="btn-clear-transactions"></button>
+            </div>
+
+        </div>
     </div>
-  </div>
+
+    <!-- Modal Customizado (Popups) -->
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content">
+            <h3 class="panel-title" id="modal-title">Título</h3>
+            <div id="modal-body" class="modal-body"></div>
+            <div class="modal-actions">
+                <button id="modal-cancel" class="btn-outline" style="padding: 10px 20px;">Cancelar</button>
+                <button id="modal-confirm" class="btn-main-action" style="padding: 10px 20px; font-size: 1rem; width: auto;">Confirmar</button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
@@ -966,27 +836,15 @@ onMounted(() => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Plus Jakarta Sans", "Trebuchet MS", sans-serif;
+  
 }
 
 body {
-  background:
-    radial-gradient(
-      circle at 10% 15%,
-      rgba(77, 131, 208, 0.17),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 85% 20%,
-      rgba(102, 183, 223, 0.12),
-      transparent 36%
-    ),
-    linear-gradient(
-      130deg,
-      var(--bg-deep),
-      var(--bg-mid) 48%,
-      var(--bg-end) 100%
-    );
+  
+  font-family: 'Plus Jakarta Sans', 'Trebuchet MS', sans-serif;
+  background: radial-gradient(circle at 10% 15%, rgba(77, 131, 208, 0.17), transparent 32%),
+            radial-gradient(circle at 85% 20%, rgba(102, 183, 223, 0.12), transparent 36%),
+            linear-gradient(130deg, var(--bg-deep), var(--bg-mid) 48%, var(--bg-end) 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -996,74 +854,22 @@ body {
   color: var(--text-main);
   padding: 24px;
 }
-
 /* Fundo Animado */
-.bg-scene {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-}
-.glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(44px);
-  opacity: 0.55;
-  animation: drift 14s ease-in-out infinite;
-}
-.orb-a {
-  width: 360px;
-  height: 360px;
-  top: -110px;
-  right: 15%;
-  background: rgba(116, 166, 223, 0.3);
-}
-.orb-b {
-  width: 280px;
-  height: 280px;
-  bottom: 6%;
-  left: 10%;
-  background: rgba(95, 177, 205, 0.22);
-  animation-delay: -5s;
-}
-.orb-c {
-  width: 180px;
-  height: 180px;
-  top: 32%;
-  right: 8%;
-  background: rgba(118, 147, 211, 0.24);
-  animation-delay: -2s;
-}
-.noise-layer {
-  position: absolute;
-  inset: 0;
-  opacity: 0.06;
-  background-image: radial-gradient(
-    circle at center,
-    #ffffff 0 1px,
-    transparent 1px
-  );
-  background-size: 4px 4px;
-}
+.bg-scene { position: fixed; inset: 0; pointer-events: none; }
+.glow { position: absolute; border-radius: 50%; filter: blur(44px); opacity: 0.55; animation: drift 14s ease-in-out infinite; }
+.orb-a { width: 360px; height: 360px; top: -110px; right: 15%; background: rgba(116, 166, 223, 0.3); }
+.orb-b { width: 280px; height: 280px; bottom: 6%; left: 10%; background: rgba(95, 177, 205, 0.22); animation-delay: -5s; }
+.orb-c { width: 180px; height: 180px; top: 32%; right: 8%; background: rgba(118, 147, 211, 0.24); animation-delay: -2s; }
+.noise-layer { position: absolute; inset: 0; opacity: 0.06; background-image: radial-gradient(circle at center, #ffffff 0 1px, transparent 1px); background-size: 4px 4px; }
 
 /* Dashboard Base */
-.dashboard-shell {
-  position: relative;
-  width: min(1400px, 100%);
-  z-index: 1;
-}
+.dashboard-shell { position: relative; width: min(1400px, 100%); z-index: 1; }
 
 .dashboard {
   position: relative;
-  background: linear-gradient(
-    145deg,
-    rgba(38, 67, 120, 0.31),
-    rgba(10, 22, 52, 0.54)
-  );
-  border: 1px solid rgba(130, 185, 230, 0.3); /* Contorno leve */
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.22),
-    inset 0 -20px 60px rgba(0, 0, 0, 0.24),
-    0 22px 80px rgba(5, 10, 30, 0.7);
+  background: linear-gradient(145deg, rgba(38, 67, 120, 0.31), rgba(10, 22, 52, 0.54));
+  border: 1px solid rgba(130, 185, 230, 0.3);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -20px 60px rgba(0, 0, 0, 0.24), 0 22px 80px rgba(5, 10, 30, 0.7);
   backdrop-filter: blur(20px) saturate(135%);
   -webkit-backdrop-filter: blur(20px) saturate(135%);
   width: 100%;
@@ -1072,473 +878,88 @@ body {
   color: var(--text-main);
 }
 
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 35px;
-  font-size: 1.4rem;
-  color: var(--accent-sky);
-}
-.top-icons {
-  display: flex;
-  gap: 18px;
-}
-#toggle-visibility {
-  cursor: pointer;
-}
-.top-icons i {
-  border: 1px solid rgba(130, 185, 230, 0.3);
-  background: rgba(129, 178, 224, 0.08);
-  border-radius: 12px;
-  width: 44px;
-  height: 44px;
+.top-bar { display: flex; justify-content: space-between; margin-bottom: 35px; font-size: 1.4rem; color: var(--accent-sky); }
+.top-icons { display: flex; gap: 18px; }
+#toggle-visibility { cursor: pointer; }
+.top-icons i { border: 1px solid rgba(130, 185, 230, 0.3); background: rgba(129, 178, 224, 0.08); border-radius: 12px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; transition: 0.3s; }
+.top-icons i:hover { transform: translateY(-2px); border-color: rgba(204, 226, 246, 0.5); background: rgba(149, 194, 230, 0.14); }
+
+/* NOVO: Grid de 3 Colunas */
+.dashboard-grid {
   display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: 0.3s;
-}
-.top-icons i:hover {
-  transform: translateY(-2px);
-  border-color: rgba(204, 226, 246, 0.5);
-  background: rgba(149, 194, 230, 0.14);
-}
-
-/* Grid de Status */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-.stat-card {
-  background: linear-gradient(
-    145deg,
-    rgba(105, 153, 215, 0.13),
-    rgba(70, 119, 188, 0.1)
-  );
-  border: 1px solid rgba(130, 185, 230, 0.25);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 12px 40px rgba(1, 8, 24, 0.45);
-  padding: 20px;
-  border-radius: 22px;
-  color: var(--text-title);
-}
-.stat-card .label {
-  font-weight: 600;
-  display: block;
-  color: var(--text-soft);
-}
-.stat-card .value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-top: 10px;
-  display: block;
-}
-.value-hidden {
-  filter: blur(7px);
-  user-select: none;
-}
-
-.card-header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-}
-.btn-icon-edit {
-  background: transparent;
-  border: none;
-  color: var(--text-soft);
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 5px;
-  transition: 0.2s;
-}
-.btn-icon-edit:hover {
-  color: var(--accent-cyan);
-  transform: scale(1.1);
-}
-
-/* Progresso Renda Isenção */
-.label-muted {
-  font-size: 0.75rem;
-  color: var(--text-soft);
-  font-weight: 400;
-  margin-left: 4px;
-}
-.value-max {
-  font-size: 1rem;
-  color: var(--text-soft);
-  font-weight: 500;
-}
-.progress-container {
-  width: 100%;
-  height: 8px;
-  background: rgba(186, 219, 246, 0.1);
-  border-radius: 6px;
-  margin-top: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(130, 185, 230, 0.2);
-}
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--chart-a), var(--chart-b));
-  border-radius: 6px;
-  transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(113, 194, 217, 0.4);
-}
-
-/* Painéis Glass (Reutilizável - Gráficos e Listas) */
-.glass-panel {
-  background: rgba(66, 108, 171, 0.08);
-  border: 1px solid rgba(130, 185, 230, 0.25);
-  border-radius: 26px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  backdrop-filter: blur(10px);
-}
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.panel-title {
-  color: var(--text-title);
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.btn-add {
-  background: rgba(113, 194, 217, 0.15);
-  border: 1px solid rgba(113, 194, 217, 0.4);
-  color: var(--accent-cyan);
-  border-radius: 10px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  transition: 0.25s;
-  display: grid;
-  place-items: center;
-}
-.btn-add:hover {
-  background: rgba(113, 194, 217, 0.3);
-  transform: scale(1.05);
-  border-color: var(--accent-cyan);
-}
-.btn-remove {
-  background: transparent;
-  border: none;
-  color: var(--danger-soft);
-  cursor: pointer;
-  opacity: 0.4;
-  transition: 0.25s;
-  padding: 5px;
-  margin-left: 10px;
-}
-.btn-remove:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-/* Grids do Meio e de Baixo */
-.main-content {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr 1fr;
-  gap: 30px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
   align-items: stretch;
 }
-.bottom-content {
-  display: grid;
-  grid-template-columns: 1.8fr 1.1fr 1.1fr;
-  gap: 30px;
-  margin-top: 30px;
+.grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-/* Listas (Renda e Metas) */
-.detail-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  flex-grow: 1;
-  justify-content: center;
-}
-.detail-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(130, 185, 230, 0.15);
-}
-.detail-list li div {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-soft);
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-.detail-list li .value {
-  color: var(--text-title);
-  font-weight: 600;
-}
+/* Componentes (Cards e Painéis) */
+.stat-card { background: linear-gradient(145deg, rgba(105, 153, 215, 0.13), rgba(70, 119, 188, 0.1)); border: 1px solid rgba(130, 185, 230, 0.25); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 12px 40px rgba(1, 8, 24, 0.45); padding: 20px; border-radius: 22px; color: var(--text-title); }
+.stat-card .label { font-weight: 600; display: block; color: var(--text-soft); }
+.stat-card .value { font-size: 1.4rem; font-weight: 700; margin-top: 10px; display: block; }
+.value-hidden { filter: blur(7px); user-select: none; }
+.card-header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.btn-icon-edit { background: transparent; border: none; color: var(--text-soft); cursor: pointer; font-size: 0.9rem; padding: 5px; transition: 0.2s; }
+.btn-icon-edit:hover { color: var(--accent-cyan); transform: scale(1.1); }
 
-.goal-item {
-  display: flex;
-  flex-direction: column;
-}
-.goal-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--text-soft);
-  margin-bottom: 8px;
-}
-.goal-header span:last-child {
-  color: var(--text-main);
-  font-weight: 600;
-}
+.label-muted { font-size: 0.75rem; color: var(--text-soft); font-weight: 400; margin-left: 4px; }
+.value-max { font-size: 1rem; color: var(--text-soft); font-weight: 500; }
+.progress-container { width: 100%; height: 8px; background: rgba(186, 219, 246, 0.1); border-radius: 6px; margin-top: 14px; overflow: hidden; border: 1px solid rgba(130, 185, 230, 0.2); }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--chart-a), var(--chart-b)); border-radius: 6px; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(113, 194, 217, 0.4); }
 
-/* Transações */
-.transaction-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  max-height: 250px;
-  padding-right: 8px;
-}
-.transaction-list::-webkit-scrollbar {
-  width: 6px;
-}
-.transaction-list::-webkit-scrollbar-thumb {
-  background: rgba(113, 194, 217, 0.2);
-  border-radius: 10px;
-}
-.transaction-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(113, 194, 217, 0.4);
-}
-.transaction-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px;
-  background: rgba(10, 22, 52, 0.4);
-  border: 1px solid rgba(130, 185, 230, 0.2);
-  border-radius: 14px;
-  transition: transform 0.2s;
-}
-.transaction-item:hover {
-  transform: translateX(4px);
-  background: rgba(10, 22, 52, 0.6);
-  border-color: rgba(130, 185, 230, 0.4);
-}
-.transaction-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.transaction-title {
-  color: var(--text-main);
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-.transaction-date {
-  color: var(--text-soft);
-  font-size: 0.75rem;
-}
-.transaction-value {
-  font-weight: 700;
-  font-size: 1rem;
-}
-.transaction-value.positive {
-  color: var(--accent-cyan);
-}
-.transaction-value.negative {
-  color: var(--danger-soft);
-}
+.glass-panel { background: rgba(66, 108, 171, 0.08); border: 1px solid rgba(130, 185, 230, 0.25); border-radius: 26px; padding: 28px; display: flex; flex-direction: column; backdrop-filter: blur(10px); }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.panel-title { color: var(--text-title); font-size: 1.1rem; font-weight: 600; }
+
+.btn-add { background: rgba(113, 194, 217, 0.15); border: 1px solid rgba(113, 194, 217, 0.4); color: var(--accent-cyan); border-radius: 10px; width: 32px; height: 32px; cursor: pointer; transition: 0.25s; display: grid; place-items: center; }
+.btn-add:hover { background: rgba(113, 194, 217, 0.3); transform: scale(1.05); border-color: var(--accent-cyan); }
+.btn-remove { background: transparent; border: none; color: var(--danger-soft); cursor: pointer; opacity: 0.4; transition: 0.25s; padding: 5px; margin-left: 10px; }
+.btn-remove:hover { opacity: 1; transform: scale(1.1); }
+
+/* Listas */
+.detail-list { list-style: none; display: flex; flex-direction: column; gap: 18px; flex-grow: 1; justify-content: center; overflow-y: auto; max-height: 300px; padding-right: 5px;}
+.detail-list::-webkit-scrollbar { width: 6px; }
+.detail-list::-webkit-scrollbar-thumb { background: rgba(113, 194, 217, 0.2); border-radius: 10px; }
+.detail-list li { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(130, 185, 230, 0.15); }
+.detail-list li div { display: flex; align-items: center; gap: 12px; color: var(--text-soft); font-size: 0.95rem; white-space: nowrap; }
+.detail-list li .value { color: var(--text-title); font-weight: 600; }
+
+.goal-item { display: flex; flex-direction: column; }
+.goal-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-soft); margin-bottom: 8px; }
+.goal-header span:last-child { color: var(--text-main); font-weight: 600; }
+
+/* Transações Ocultas */
+.transaction-list { display: none; } 
 
 /* IA e Botões */
-.ai-suggestion-box {
-  border: 1px solid rgba(130, 185, 230, 0.25);
-  border-radius: 24px;
-  background: linear-gradient(
-    150deg,
-    rgba(78, 130, 192, 0.17),
-    rgba(49, 90, 151, 0.08)
-  );
-  padding: 25px;
-  margin-bottom: 25px;
-}
-.ai-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-.ai-header h3 {
-  color: var(--text-title);
-  font-size: 1.08rem;
-}
-.icon-circle {
-  border: 1px solid rgba(130, 185, 230, 0.3);
-  background: rgba(97, 156, 209, 0.15);
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--accent-cyan);
-}
-.quick-actions {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-.btn-outline {
-  flex: 1;
-  background: rgba(95, 145, 204, 0.08);
-  border: 1px solid rgba(130, 185, 230, 0.3);
-  color: var(--text-main);
-  padding: 13px;
-  border-radius: 15px;
-  cursor: pointer;
-  font-weight: 700;
-  transition: 0.25s;
-}
-.btn-outline:hover {
-  transform: translateY(-2px);
-  background: rgba(111, 167, 221, 0.15);
-  border-color: rgba(130, 185, 230, 0.5);
-}
-.btn-main-action {
-  width: 100%;
-  background: linear-gradient(135deg, var(--button-a), var(--button-b));
-  color: #081f35;
-  border: none;
-  padding: 16px;
-  border-radius: 18px;
-  font-size: 1.28rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: 0.25s;
-}
-.btn-main-action:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 36px rgba(80, 154, 219, 0.34);
-}
+.ai-suggestion-box { border: 1px solid rgba(130, 185, 230, 0.25); border-radius: 24px; background: linear-gradient(150deg, rgba(78, 130, 192, 0.17), rgba(49, 90, 151, 0.08)); padding: 25px; }
+.ai-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+.ai-header h3 { color: var(--text-title); font-size: 1.08rem; }
+.icon-circle { border: 1px solid rgba(130, 185, 230, 0.3); background: rgba(97, 156, 209, 0.15); border-radius: 50%; width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; color: var(--accent-cyan); }
+.btn-outline { flex: 1; background: rgba(95, 145, 204, 0.08); border: 1px solid rgba(130, 185, 230, 0.3); color: var(--text-main); padding: 13px; border-radius: 15px; cursor: pointer; font-weight: 700; transition: 0.25s; }
+.btn-outline:hover { transform: translateY(-2px); background: rgba(111, 167, 221, 0.15); border-color: rgba(130, 185, 230, 0.5); }
+.btn-main-action { width: 100%; background: linear-gradient(135deg, var(--button-a), var(--button-b)); color: #081f35; border: none; padding: 16px; border-radius: 18px; font-size: 1.28rem; font-weight: 800; cursor: pointer; transition: 0.25s; }
+.btn-main-action:hover { transform: translateY(-3px); box-shadow: 0 18px 36px rgba(80, 154, 219, 0.34); }
 
 /* Modal Customizado (Popups) */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 11, 29, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 9999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-.modal-overlay.hidden {
-  display: none;
-  opacity: 0;
-}
-.modal-content {
-  width: 90%;
-  max-width: 420px;
-  padding: 30px;
-  border: 1px solid rgba(130, 185, 230, 0.35);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-  transform: translateY(0);
-  animation: modalSlideIn 0.3s ease-out forwards;
-}
-@keyframes modalSlideIn {
-  from {
-    transform: translateY(20px) scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 25px;
-}
-.modal-input {
-  background: rgba(10, 22, 52, 0.4);
-  border: 1px solid rgba(130, 185, 230, 0.25);
-  color: var(--text-main);
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 1rem;
-  width: 100%;
-  outline: none;
-  transition: 0.2s;
-}
-.modal-input:focus {
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 0 3px rgba(113, 194, 217, 0.15);
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
+.modal-overlay { position: fixed; inset: 0; background: rgba(4, 11, 29, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 1; transition: opacity 0.3s ease; }
+.modal-overlay.hidden { display: none; opacity: 0; }
+.modal-content { width: 90%; max-width: 420px; padding: 30px; border: 1px solid rgba(130, 185, 230, 0.35); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); transform: translateY(0); animation: modalSlideIn 0.3s ease-out forwards; }
+@keyframes modalSlideIn { from { transform: translateY(20px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+.modal-body { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
+.modal-input { background: rgba(10, 22, 52, 0.4); border: 1px solid rgba(130, 185, 230, 0.25); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 1rem; width: 100%; outline: none; transition: 0.2s; }
+.modal-input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 0 3px rgba(113, 194, 217, 0.15); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
 
-/* Responsividade (Para não quebrar na tela) */
-@media (max-width: 1400px) {
-  .main-content {
-    grid-template-columns: 1fr 1fr;
-  }
-  .sidebar-actions {
-    grid-column: span 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: center;
-  }
-  .bottom-content {
-    grid-template-columns: 1fr 1fr;
-  }
-  .transactions-panel {
-    grid-column: span 2;
-  }
+/* Responsividade */
+@media (max-width: 1024px) {
+    .dashboard-grid { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 850px) {
-  .main-content,
-  .bottom-content,
-  .sidebar-actions {
-    grid-template-columns: 1fr;
-  }
-  .transactions-panel,
-  .sidebar-actions {
-    grid-column: span 1;
-  }
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .dashboard {
-    padding: 24px;
-  }
-}
-@media (max-width: 550px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  .quick-actions {
-    flex-direction: column;
-  }
+@media (max-width: 768px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
 }
 </style>
