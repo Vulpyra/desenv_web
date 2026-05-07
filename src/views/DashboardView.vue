@@ -5,14 +5,14 @@ import { useModal } from '@/composables/useModal'
 import { useCurrency } from '@/composables/useCurrency'
 
 // Componentes
-import StatCards from '@/components/StatCards.vue'
-import PieChart from '@/components/PieChart.vue'
-import IncomeDetails from '@/components/IncomeDetails.vue'
-import AISuggestion from '@/components/AISuggestion.vue'
-import QuickActions from '@/components/QuickActions.vue'
-import EvolutionChart from '@/components/EvolutionChart.vue'
-import GoalsPanel from '@/components/GoalsPanel.vue'
-import TransactionsPanel from '@/components/TransactionsPanel.vue'
+import StatCards from '@/components/dashboard/StatCards.vue'
+import PieChart from '@/components/charts/PieChart.vue'
+import IncomeDetails from '@/components/dashboard/IncomeDetails.vue'
+import AISuggestion from '@/components/dashboard/AISuggestion.vue'
+import QuickActions from '@/components/dashboard/QuickActions.vue'
+import EvolutionChart from '@/components/charts/EvolutionChart.vue'
+import GoalsPanel from '@/components/goals/GoalsPanel.vue'
+import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
 import Modal from '@/components/Modal.vue'
 
 // Estado
