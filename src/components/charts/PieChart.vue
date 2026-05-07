@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 const props = defineProps({
   data: {
@@ -20,9 +20,10 @@ const percentages = computed(() => {
   return props.data.map(v => Math.round((v / total) * 100))
 })
 
-onMounted(() => {
+const buildChart = () => {
   if (!canvasRef.value || typeof Chart === 'undefined') return
-  
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+
   const rootStyles = getComputedStyle(document.documentElement)
   const colorA = rootStyles.getPropertyValue('--chart-a').trim()
   const colorB = rootStyles.getPropertyValue('--chart-b').trim()
@@ -46,7 +47,11 @@ onMounted(() => {
       plugins: { legend: { display: false } }
     }
   })
-})
+}
+
+onMounted(buildChart)
+
+watch(() => props.data, buildChart, { deep: true })
 </script>
 
 <template>

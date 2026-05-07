@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardData } from '@/composables/useDashboardData'
 import { useModal } from '@/composables/useModal'
@@ -34,6 +34,35 @@ const { isOpen, title, fields, open, close } = useModal()
 
 // Visibilidade dos valores
 const valoresOcultos = ref(false)
+
+// Onboarding: detecta se é primeiro acesso
+const isFirstAccess = computed(() =>
+  rendas.value.length === 0 &&
+  despesas.value.length === 0 &&
+  despesasAvulsas.value.length === 0 &&
+  metas.value.length === 0
+)
+
+// Sugestão dinâmica baseada nos dados reais
+const aiSuggestion = computed(() => {
+  if (isFirstAccess.value) return 'Comece adicionando sua renda mensal para ver análises personalizadas.'
+  const saldoAtual = totalRenda.value - totalDespesa.value
+  if (totalRenda.value === 0) return 'Adicione sua primeira fonte de renda para começar.'
+  const pct = totalDespesa.value / totalRenda.value
+  if (pct > 0.9) return `Suas despesas (${Math.round(pct * 100)}% da renda) estão muito altas. Revise seus gastos fixos.`
+  if (pct > 0.7) return `Despesas em ${Math.round(pct * 100)}% da renda. Tente reduzir para abaixo de 70%.`
+  if (metas.value.length === 0) return `Saldo positivo de ${formatCurrency(saldoAtual)}. Que tal definir uma meta financeira?`
+  return `Saldo de ${formatCurrency(saldoAtual)} disponível. Continue assim!`
+})
+
+// Dados reais para o PieChart
+const pieData = computed(() => {
+  const r = totalRenda.value
+  const d = totalDespesa.value
+  if (r === 0 && d === 0) return [1, 1]
+  return [r, d]
+})
+const pieLabels = computed(() => ['Renda', 'Despesas'])
 
 const toggleVisibilidade = () => {
   valoresOcultos.value = !valoresOcultos.value
@@ -217,6 +246,34 @@ onMounted(load)
         </div>
       </header>
 
+      <!-- Banner de onboarding (primeiro acesso) -->
+      <div v-if="isFirstAccess" class="onboarding-banner">
+        <div class="onboarding-steps">
+          <div class="onboarding-title">
+            <i class="fas fa-hand-wave"></i>
+            Bem-vindo ao Renda Fácil! Siga os passos para começar:
+          </div>
+          <ol class="onboarding-list">
+            <li @click="openAddRenda">
+              <span class="step-num">1</span>
+              <span>Adicione sua <strong>renda mensal</strong> — clique aqui ou no <i class="fas fa-plus"></i> em "Renda Mensal"</span>
+            </li>
+            <li @click="openAddDespesaFixa">
+              <span class="step-num">2</span>
+              <span>Cadastre suas <strong>despesas fixas</strong> (aluguel, planos, etc.)</span>
+            </li>
+            <li @click="openAddMeta">
+              <span class="step-num">3</span>
+              <span>Defina uma <strong>meta financeira</strong> para ter algo a perseguir</span>
+            </li>
+            <li @click="openAddHistorico">
+              <span class="step-num">4</span>
+              <span>Registre o <strong>patrimônio atual</strong> para acompanhar sua evolução</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+
       <!-- Cards de estatísticas -->
       <StatCards
         :patrimonio="patrimonio"
@@ -231,7 +288,7 @@ onMounted(load)
 
       <!-- Conteúdo principal -->
       <section class="main-content">
-        <PieChart :data="[45, 55]" />
+        <PieChart :data="pieData" :labels="pieLabels" />
         
         <IncomeDetails
           :rendas="rendas"
@@ -250,7 +307,7 @@ onMounted(load)
           @clear-all="confirmClearAll"
         >
           <template #ai-suggestion>
-            <AISuggestion />
+            <AISuggestion :suggestion="aiSuggestion" />
           </template>
         </QuickActions>
       </section>

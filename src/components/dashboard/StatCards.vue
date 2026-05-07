@@ -45,16 +45,5 @@ const { formatCurrency } = useCurrency()
       @clear="$emit('clearDespesas')"
       @add-expense="$emit('addDespesa')"
     />
-    <StatCard
-      label="Renda declarada"
-      value="R$ 890,00"
-      muted-label="Limite Isenção"
-      :is-hidden="isHidden"
-      :progress="68"
-    >
-      <template #suffix>
-        <span class="value-max">/ R$ 1.300,00</span>
-      </template>
-    </StatCard>
   </section>
 </template>
