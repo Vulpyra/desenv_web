@@ -1,11 +1,20 @@
 <script setup>
 import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ProfileHeader, ProfileInfoCard, ProfilePreferences, ProfileActions } from '@/components'
 import { useProfile } from '@/composables'
+import { useAuth } from '@/composables/useAuth'
 
+const router = useRouter()
+const { signOut } = useAuth()
 const { profile, preferences, isLoading, load, saveAll, deleteAccount, updatePreferences } = useProfile()
 
 onMounted(load)
+
+const handleSignOut = async () => {
+  await signOut()
+  router.push('/auth')
+}
 
 const handleSave = async () => {
   const result = await saveAll()
@@ -40,7 +49,7 @@ const handleChangePhoto = () => {
     <span class="particle-stream" aria-hidden="true"></span>
 
     <div class="dashboard profile-page">
-      <ProfileHeader />
+      <ProfileHeader @sign-out="handleSignOut" />
 
       <main class="profile-content">
         <h1 class="page-title">Meu Perfil</h1>

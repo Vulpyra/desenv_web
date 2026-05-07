@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDashboardData } from '@/composables/useDashboardData'
 import { useModal } from '@/composables/useModal'
 import { useCurrency } from '@/composables/useCurrency'
+import { useAuth } from '@/composables/useAuth'
 
 // Componentes
 import StatCards from '@/components/dashboard/StatCards.vue'
@@ -14,6 +16,9 @@ import EvolutionChart from '@/components/charts/EvolutionChart.vue'
 import GoalsPanel from '@/components/goals/GoalsPanel.vue'
 import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
 import Modal from '@/components/Modal.vue'
+
+const router = useRouter()
+const { signOut } = useAuth()
 
 // Estado
 const { parseCurrency } = useCurrency()
@@ -40,7 +45,12 @@ const goToSimulado = () => {
 }
 
 const goToProfile = () => {
-  window.location.href = '/perfil'
+  router.push('/perfil')
+}
+
+const handleSignOut = async () => {
+  await signOut()
+  router.push('/auth')
 }
 
 // Handlers de Modal
@@ -203,6 +213,7 @@ onMounted(load)
             title="Ocultar/Exibir valores"
           ></i>
           <i class="far fa-user-circle" @click="goToProfile" title="Meu Perfil" style="cursor: pointer"></i>
+          <i class="fas fa-sign-out-alt" @click="handleSignOut" title="Sair" style="cursor: pointer"></i>
         </div>
       </header>
 
