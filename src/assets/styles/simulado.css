@@ -1,0 +1,102 @@
+/* ========================================
+   SIMULADO.CSS - Específico da página de simulado
+   ======================================== */
+
+.simulado-shell {
+  width: min(1180px, 100%);
+}
+
+.simulado-shell .dashboard {
+  padding: 28px;
+}
+
+.simulado-shell .top-bar {
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+/* Título do topo */
+.top-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.top-title .eyebrow {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-bottom: 4px;
+}
+
+.top-title h1 {
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  color: var(--text-title);
+  font-weight: 800;
+}
+
+/* Layout do simulado */
+.simulado-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
+  align-items: start;
+  gap: 24px;
+}
+
+/* Painéis do formulário */
+.form-panel,
+.summary-panel {
+  padding: 24px;
+}
+
+/* Painel de resumo */
+.summary-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary-item {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(176, 207, 240, 0.16);
+  background: rgba(95, 145, 204, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+}
+
+.summary-item strong {
+  font-size: 1rem;
+  color: var(--text-title);
+}
+
+/* Gráfico do resumo */
+.summary-chart {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(176, 207, 240, 0.12);
+  display: grid;
+  gap: 14px;
+}
+
+.summary-chart .pie-chart {
+  width: min(240px, 100%);
+  height: min(240px, 100%);
+  margin: 0 auto;
+}
+
+.summary-chart p {
+  color: var(--text-soft);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}

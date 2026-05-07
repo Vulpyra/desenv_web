@@ -1,0 +1,49 @@
+/* ========================================
+   BASE.CSS - Reset, variáveis e tipografia base
+   ======================================== */
+
+:root {
+  --bg-deep: #040b1d;
+  --bg-mid: #10213f;
+  --bg-end: #07122f;
+  --glass-surface: rgba(17, 32, 64, 0.44);
+  --glass-soft: rgba(104, 156, 214, 0.09);
+  --glass-border: rgba(184, 212, 245, 0.2);
+  --text-main: #d4e0f2;
+  --text-soft: #97abc7;
+  --text-title: #f4f9ff;
+  --accent-cyan: #78c8e7;
+  --accent-sky: #90afd9;
+  --accent-deep: #355a95;
+  --danger-soft: #ff8599;
+  --chart-a: #7ea7d9;
+  --chart-b: #71c2d9;
+  --button-a: #6b99d1;
+  --button-b: #7fb9d0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', 'Trebuchet MS', sans-serif;
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 15%, rgba(77, 131, 208, 0.17), transparent 32%),
+    radial-gradient(circle at 85% 20%, rgba(102, 183, 223, 0.12), transparent 36%),
+    linear-gradient(130deg, var(--bg-deep), var(--bg-mid) 48%, var(--bg-end) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  color: var(--text-main);
+  padding: 24px;
+}
+
+#app {
+  width: 100%;
+}
