@@ -4,6 +4,53 @@ import { useCurrency } from './useCurrency'
 
 export function useDashboardData() {
   const { formatCurrency } = useCurrency()
+  const monthOrder = {
+    jan: 1,
+    fev: 2,
+    mar: 3,
+    abr: 4,
+    mai: 5,
+    jun: 6,
+    jul: 7,
+    ago: 8,
+    set: 9,
+    out: 10,
+    nov: 11,
+    dez: 12
+  }
+
+  const normalizeMonth = (mes) => {
+    if (!mes) return ''
+    const base = String(mes)
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[^\w\s]/g, '')
+
+    const token = base.slice(0, 3)
+    const aliases = {
+      january: 'jan', janeiro: 'jan', jan: 'jan',
+      february: 'fev', fevereiro: 'fev', fev: 'fev',
+      march: 'mar', marco: 'mar', mar: 'mar',
+      april: 'abr', abril: 'abr', abr: 'abr',
+      may: 'mai', maio: 'mai', mai: 'mai',
+      june: 'jun', junho: 'jun', jun: 'jun',
+      july: 'jul', julho: 'jul', jul: 'jul',
+      august: 'ago', agosto: 'ago', ago: 'ago',
+      september: 'set', setembro: 'set', set: 'set',
+      october: 'out', outubro: 'out', out: 'out',
+      november: 'nov', novembro: 'nov', nov: 'nov',
+      december: 'dez', dezembro: 'dez', dez: 'dez'
+    }
+
+    const normalized = aliases[base] || aliases[token] || token
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+  }
+
+  const monthIndex = (mes) => monthOrder[normalizeMonth(mes).toLowerCase()] || 99
+
+  const sortHistoricoRows = (rows = []) =>
+    [...rows].sort((a, b) => monthIndex(a.mes) - monthIndex(b.mes))
 
   // Estado
   const patrimonio = ref(0)
@@ -61,12 +108,13 @@ export function useDashboardData() {
           day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         })
       }))
+      const orderedHistorico = sortHistoricoRows(historicoData || [])
       historico.value = {
-        labels: (historicoData || []).map(h => h.mes),
-        dados: (historicoData || []).map(h => Number(h.valor))
+        labels: orderedHistorico.map(h => normalizeMonth(h.mes)),
+        dados: orderedHistorico.map(h => Number(h.valor))
       }
-      patrimonio.value = historicoData?.length
-        ? Number(historicoData[historicoData.length - 1].valor)
+      patrimonio.value = orderedHistorico.length
+        ? Number(orderedHistorico[orderedHistorico.length - 1].valor)
         : 0
     } catch (err) {
       error.value = err.message
@@ -165,14 +213,29 @@ export function useDashboardData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const normalizedMes = normalizeMonth(mes)
+
     const { error: err } = await supabase
       .from('patrimonio_historico')
-      .insert({ usuario_id: user.id, mes, valor })
+      .insert({ usuario_id: user.id, mes: normalizedMes, valor })
 
     if (err) { error.value = err.message; return }
-    historico.value.labels.push(mes)
-    historico.value.dados.push(valor)
-    patrimonio.value = valor
+
+    const merged = historico.value.labels.map((m, i) => ({
+      mes: normalizeMonth(m),
+      valor: Number(historico.value.dados[i])
+    }))
+
+    merged.push({ mes: normalizedMes, valor: Number(valor) })
+
+    const orderedHistorico = sortHistoricoRows(merged)
+    historico.value = {
+      labels: orderedHistorico.map(h => h.mes),
+      dados: orderedHistorico.map(h => h.valor)
+    }
+    patrimonio.value = historico.value.dados.length
+      ? historico.value.dados[historico.value.dados.length - 1]
+      : 0
   }
 
   // Remover
