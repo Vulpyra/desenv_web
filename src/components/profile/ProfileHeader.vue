@@ -11,9 +11,12 @@ const goToSimulado = () => router.push('/simulado')
 
 <template>
   <header class="top-bar">
-    <div class="brand-mark" @click="goToDashboard" aria-label="Renda Fácil">
-      <span class="brand-text">← Voltar</span>
-    </div>
+    <img
+      class="return-icon"
+      src="/images/icons/return-svgrepo-com.svg"
+      alt="Voltar"
+      @click="goToDashboard"
+    />
     <div class="top-icons">
       <i
         class="far fa-chart-bar"
@@ -26,16 +29,3 @@ const goToSimulado = () => router.push('/simulado')
   </header>
 </template>
 
-<style scoped>
-.brand-mark {
-  cursor: pointer;
-}
-
-.top-icons i {
-  cursor: pointer;
-}
-
-.top-icons i.active {
-  color: var(--accent-6);
-}
-</style>
