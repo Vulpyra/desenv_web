@@ -145,20 +145,45 @@ body {
 .modal-input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 0 3px rgba(113, 194, 217, 0.15); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
 
-/* Responsividade (Para não quebrar na tela) */
+/* Responsividade */
 @media (max-width: 1400px) {
     .main-content { grid-template-columns: 1fr 1fr; }
-    .sidebar-actions { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; }
+    .sidebar-actions { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .ai-suggestion-box { grid-column: span 2; margin-bottom: 0; }
+    .quick-actions { grid-column: span 1; margin-bottom: 0; flex-direction: column; gap: 10px; }
+    .btn-main-action { grid-column: span 1; margin-bottom: 0 !important; }
+    #btn-clear-all { grid-column: span 2; }
     .bottom-content { grid-template-columns: 1fr 1fr; }
     .transactions-panel { grid-column: span 2; }
 }
 @media (max-width: 850px) {
-    .main-content, .bottom-content, .sidebar-actions { grid-template-columns: 1fr; }
-    .transactions-panel, .sidebar-actions { grid-column: span 1; }
+    body { padding: 16px; }
+    .main-content, .bottom-content { grid-template-columns: 1fr; }
+    .sidebar-actions { grid-column: span 1; grid-template-columns: 1fr; }
+    .ai-suggestion-box, .quick-actions, .btn-main-action, #btn-clear-all { grid-column: span 1; }
+    .quick-actions { flex-direction: row; }
+    .transactions-panel { grid-column: span 1; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .dashboard { padding: 24px; }
+    .dashboard { padding: 20px; }
+    .top-bar { font-size: 1.1rem; margin-bottom: 24px; }
+    .panel-title { font-size: 1rem; }
+    .stat-card .value { font-size: 1.2rem; }
+    .btn-main-action { font-size: 1.1rem; padding: 14px; }
 }
 @media (max-width: 550px) {
-    .stats-grid { grid-template-columns: 1fr; }
-    .quick-actions { flex-direction: column; }
+    body { padding: 10px; }
+    .dashboard { padding: 16px; border-radius: 20px; }
+    .stats-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+    .top-bar { font-size: 1rem; margin-bottom: 20px; }
+    .brand-text { font-size: 0.95rem; }
+    .top-icons i { width: 38px; height: 38px; }
+    .top-icons { gap: 10px; }
+    .glass-panel { padding: 20px; border-radius: 20px; }
+    .quick-actions { flex-direction: column; gap: 10px; }
+    .panel-title { font-size: 0.95rem; }
+    .stat-card .value { font-size: 1.1rem; }
+    .btn-main-action { font-size: 1rem; padding: 13px; border-radius: 14px; }
+    .modal-content { padding: 22px; }
+    .detail-list li div { white-space: normal; }
+    .transaction-list { max-height: 220px; }
 }
