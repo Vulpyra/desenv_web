@@ -1,8 +1,11 @@
 <script setup>
+import { onMounted } from 'vue'
 import { ProfileHeader, ProfileInfoCard, ProfilePreferences, ProfileActions } from '@/components'
 import { useProfile } from '@/composables'
 
-const { profile, preferences, isLoading, saveAll, deleteAccount } = useProfile()
+const { profile, preferences, isLoading, load, saveAll, deleteAccount, updatePreferences } = useProfile()
+
+onMounted(load)
 
 const handleSave = async () => {
   const result = await saveAll()
@@ -43,19 +46,19 @@ const handleChangePhoto = () => {
         <h1 class="page-title">Meu Perfil</h1>
 
         <ProfileInfoCard
-          :name="profile.name"
+          :name="profile.nome"
           :email="profile.email"
-          :created-at="profile.createdAt"
-          :avatar="profile.avatar"
+          :created-at="profile.criado_em"
+          :avatar="profile.avatar_url"
           @change-photo="handleChangePhoto"
         />
 
         <ProfilePreferences
           :preferences="preferences"
-          @update:currency="preferences.currency = $event"
-          @update:theme="preferences.theme = $event"
-          @update:notifications="preferences.notifications = $event"
-          @update:hideValues="preferences.hideValues = $event"
+          @update:currency="updatePreferences({ moeda: $event })"
+          @update:theme="updatePreferences({ tema: $event })"
+          @update:notifications="updatePreferences({ notificacoes: $event })"
+          @update:hideValues="updatePreferences({ ocultar_valores: $event })"
         />
 
         <ProfileActions

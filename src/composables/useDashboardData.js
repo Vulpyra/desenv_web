@@ -205,6 +205,29 @@ export function useDashboardData() {
     transacoes.value = transacoes.value.filter(t => t.id !== id)
   }
 
+  const clearDespesas = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('despesas').delete().eq('usuario_id', user.id)
+    despesas.value = []
+    despesasAvulsas.value = []
+  }
+
+  const clearTransacoes = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('transacoes').delete().eq('usuario_id', user.id)
+    transacoes.value = []
+  }
+
+  const clearHistorico = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('patrimonio_historico').delete().eq('usuario_id', user.id)
+    historico.value = { labels: [], dados: [] }
+    patrimonio.value = 0
+  }
+
   // Clear all
   const clearAll = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -253,6 +276,9 @@ export function useDashboardData() {
     removeDespesa,
     removeMeta,
     removeTransacao,
+    clearDespesas,
+    clearTransacoes,
+    clearHistorico,
     clearAll,
     formatCurrency
   }

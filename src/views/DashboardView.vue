@@ -21,7 +21,8 @@ const {
   patrimonio, rendas, despesas, despesasAvulsas, metas, transacoes, historico,
   totalRenda, totalDespesa,
   load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addHistorico,
-  removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll
+  removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll,
+  clearDespesas, clearTransacoes, clearHistorico
 } = useDashboardData()
 
 const { isOpen, title, fields, open, close } = useModal()
@@ -53,7 +54,8 @@ const handleConfirm = (result) => {
   switch (modalAction.value) {
     case 'patrimonio':
       if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
-        patrimonio.value = values[0]
+        const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
+        addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
       }
       break
     case 'renda':
@@ -149,8 +151,7 @@ const confirmClearDespesas = async () => {
     { placeholder: 'Digite SIM para apagar todas as despesas' }
   ])
   if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
-    despesas.value = []
-    despesasAvulsas.value = []
+    await clearDespesas()
   }
 }
 
@@ -160,7 +161,7 @@ const confirmClearTransacoes = async () => {
     { placeholder: 'Digite SIM para limpar transações' }
   ])
   if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
-    transacoes.value = []
+    await clearTransacoes()
   }
 }
 
@@ -170,7 +171,7 @@ const confirmClearHistorico = async () => {
     { placeholder: 'Digite SIM para limpar histórico' }
   ])
   if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
-    historico.value = { labels: [], dados: [] }
+    await clearHistorico()
   }
 }
 
