@@ -21,10 +21,17 @@ watch(() => props.fields, (newFields) => {
 watch(() => props.isOpen, (open) => {
   if (open) {
     nextTick(() => {
-      inputRefs.value[0]?.focus()
+      const firstInput = document.querySelector('.modal-input')
+      firstInput?.focus()
     })
   }
 })
+
+const setItemRef = (el, index) => {
+  if (el) {
+    inputRefs.value[index] = el
+  }
+}
 
 const handleInput = (event, index) => {
   if (props.fields[index].isCurrency) {
@@ -56,9 +63,9 @@ const cancel = () => {
         <input
           v-for="(field, index) in fields"
           :key="index"
-          ref="el => { if (el) inputRefs[index] = el }"
+          :ref="(el) => setItemRef(el, index)"
           v-model="inputValues[index]"
-          :type="field.isCurrency ? 'text' : 'text'"
+          type="text"
           :placeholder="field.placeholder"
           class="modal-input"
           @input="handleInput($event, index)"
