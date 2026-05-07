@@ -1,0 +1,25 @@
+/* ========================================
+   INDEX.CSS - Importa todos os estilos
+   ========================================
+   
+   Estrutura de arquivos:
+   - base.css        : Variáveis, reset e tipografia
+   - animations.css  : Keyframes
+   - background.css  : Efeitos visuais de fundo
+   - layout.css      : Grids, containers, header
+   - components.css  : Botões, inputs, elementos reutilizáveis
+   - dashboard.css   : Específico do dashboard
+   - simulado.css    : Específico da página de simulado
+   - modal.css       : Estilos do modal
+   - responsive.css  : Todos os media queries
+   ======================================== */
+
+@import './base.css';
+@import './animations.css';
+@import './background.css';
+@import './layout.css';
+@import './components.css';
+@import './dashboard.css';
+@import './simulado.css';
+@import './modal.css';
+@import './responsive.css';

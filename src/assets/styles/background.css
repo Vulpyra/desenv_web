@@ -1,0 +1,96 @@
+/* ========================================
+   BACKGROUND.CSS - Elementos de fundo e efeitos visuais
+   ======================================== */
+
+.bg-scene {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(44px);
+  opacity: 0.55;
+  animation: drift 14s ease-in-out infinite;
+}
+
+.orb-a {
+  width: 360px;
+  height: 360px;
+  top: -110px;
+  right: 15%;
+  background: rgba(116, 166, 223, 0.3);
+}
+
+.orb-b {
+  width: 280px;
+  height: 280px;
+  bottom: 6%;
+  left: 10%;
+  background: rgba(95, 177, 205, 0.22);
+  animation-delay: -5s;
+}
+
+.orb-c {
+  width: 180px;
+  height: 180px;
+  top: 32%;
+  right: 8%;
+  background: rgba(118, 147, 211, 0.24);
+  animation-delay: -2s;
+}
+
+.noise-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: radial-gradient(circle at center, #ffffff 0 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Partículas */
+.particle-stream {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  top: -96px;
+  height: 118px;
+  pointer-events: none;
+  border-radius: 999px;
+  overflow: hidden;
+  opacity: 0.5;
+  filter: blur(0.16px);
+  background:
+    radial-gradient(circle at 4% 88%, rgba(212, 233, 255, 0.44) 0 0.95px, transparent 1.8px),
+    radial-gradient(circle at 10% 56%, rgba(196, 219, 244, 0.34) 0 0.9px, transparent 1.7px),
+    radial-gradient(circle at 17% 80%, rgba(214, 234, 255, 0.4) 0 0.9px, transparent 1.7px),
+    radial-gradient(circle at 26% 60%, rgba(197, 221, 246, 0.38) 0 0.95px, transparent 1.8px),
+    radial-gradient(circle at 33% 86%, rgba(212, 233, 255, 0.36) 0 0.85px, transparent 1.6px),
+    radial-gradient(circle at 42% 48%, rgba(195, 220, 246, 0.4) 0 0.9px, transparent 1.7px),
+    radial-gradient(circle at 51% 82%, rgba(214, 234, 255, 0.34) 0 0.85px, transparent 1.6px),
+    radial-gradient(circle at 59% 54%, rgba(198, 222, 247, 0.42) 0 0.92px, transparent 1.7px),
+    radial-gradient(circle at 68% 87%, rgba(213, 234, 255, 0.34) 0 0.85px, transparent 1.6px),
+    radial-gradient(circle at 76% 52%, rgba(196, 221, 246, 0.38) 0 0.9px, transparent 1.7px),
+    radial-gradient(circle at 84% 84%, rgba(213, 234, 255, 0.34) 0 0.85px, transparent 1.6px),
+    radial-gradient(circle at 92% 58%, rgba(198, 222, 247, 0.4) 0 0.9px, transparent 1.7px);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.84) 10%, rgba(0, 0, 0, 0.84) 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.84) 10%, rgba(0, 0, 0, 0.84) 90%, transparent 100%);
+  animation: particles-rise-slow 17s linear infinite;
+}
+
+.particle-stream::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 8% 70%, rgba(221, 238, 255, 0.3) 0 0.8px, transparent 1.5px),
+    radial-gradient(circle at 23% 72%, rgba(219, 236, 255, 0.3) 0 0.8px, transparent 1.5px),
+    radial-gradient(circle at 39% 69%, rgba(221, 238, 255, 0.3) 0 0.8px, transparent 1.5px),
+    radial-gradient(circle at 52% 71%, rgba(219, 236, 255, 0.3) 0 0.8px, transparent 1.5px),
+    radial-gradient(circle at 66% 70%, rgba(221, 238, 255, 0.3) 0 0.8px, transparent 1.5px),
+    radial-gradient(circle at 81% 72%, rgba(219, 236, 255, 0.3) 0 0.8px, transparent 1.5px);
+  opacity: 0.8;
+  animation: particles-rise 10s linear infinite reverse;
+}
