@@ -202,8 +202,8 @@ onMounted(load)
     <div class="dashboard">
       <!-- Header -->
       <header class="top-bar">
-        <div class="brand-mark" aria-label="Dashboard Financeiro">
-          <span class="brand-text">Dashboard Financeiro</span>
+        <div class="brand-mark" aria-label="Renda Fácil">
+          <span class="brand-text">Renda Fácil</span>
         </div>
         <div class="top-icons">
           <i

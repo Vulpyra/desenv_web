@@ -11,8 +11,8 @@ const goToSimulado = () => router.push('/simulado')
 
 <template>
   <header class="top-bar">
-    <div class="brand-mark" @click="goToDashboard">
-      <span class="brand-text">← Voltar ao Dashboard</span>
+    <div class="brand-mark" @click="goToDashboard" aria-label="Renda Fácil">
+      <span class="brand-text">← Voltar</span>
     </div>
     <div class="top-icons">
       <i

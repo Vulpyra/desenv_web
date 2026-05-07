@@ -67,7 +67,7 @@ const handleSubmit = async () => {
     <div class="dashboard auth-card">
       <div class="auth-header">
         <div class="brand-mark" style="justify-content: center; margin-bottom: 8px">
-          <span class="brand-text">Dashboard Financeiro</span>
+          <span class="brand-text">Renda Fácil</span>
         </div>
         <p class="auth-subtitle">
           {{ isLoginMode ? 'Entre na sua conta' : 'Crie sua conta' }}
