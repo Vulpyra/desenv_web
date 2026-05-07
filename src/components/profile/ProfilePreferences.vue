@@ -102,11 +102,24 @@ defineEmits(['update:currency', 'update:theme', 'update:notifications', 'update:
 .input-field {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--divider);
-  background: var(--panel-bg);
-  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(13, 27, 62, 0.6);
+  color: #ffffff;
   font-size: 0.9rem;
   cursor: pointer;
+  min-width: 120px;
+}
+
+.input-field option {
+  background: #1a2d5a;
+  color: #ffffff;
+  padding: 8px;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--accent-6);
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.3);
 }
 
 .toggle {
@@ -129,9 +142,10 @@ defineEmits(['update:currency', 'update:theme', 'update:notifications', 'update:
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--divider);
+  background-color: rgba(255, 255, 255, 0.2);
   transition: 0.3s;
   border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toggle-slider:before {
@@ -141,16 +155,26 @@ defineEmits(['update:currency', 'update:theme', 'update:notifications', 'update:
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: #ffffff;
   transition: 0.3s;
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .toggle input:checked + .toggle-slider {
-  background: linear-gradient(90deg, var(--accent-6), var(--accent-7));
+  background: linear-gradient(90deg, #00bcd4, #00e5ff);
+  border-color: rgba(0, 188, 212, 0.5);
 }
 
 .toggle input:checked + .toggle-slider:before {
   transform: translateX(24px);
+}
+
+.toggle:hover .toggle-slider {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.toggle:hover input:checked + .toggle-slider {
+  background: linear-gradient(90deg, #00a8bd, #00d4e8);
 }
 </style>
