@@ -82,12 +82,16 @@ export function useDashboardData() {
 
     const { data, error: err } = await supabase
       .from('rendas')
-      .insert({ usuario_id: user.id, nome, valor, icone: 'fa-money-bill-wave', cor: 'var(--accent-cyan)' })
+      .upsert(
+        { usuario_id: user.id, nome, valor, icone: 'fa-money-bill-wave', cor: 'var(--accent-cyan)' },
+        { onConflict: 'usuario_id,nome', ignoreDuplicates: false }
+      )
       .select()
       .single()
 
     if (err) { error.value = err.message; return }
-    rendas.value.push(data)
+    const exists = rendas.value.find(r => r.id === data.id)
+    if (exists) { Object.assign(exists, data) } else { rendas.value.push(data) }
     await _addTransacao('renda', nome, valor, data.id, user.id)
   }
 
@@ -97,12 +101,16 @@ export function useDashboardData() {
 
     const { data, error: err } = await supabase
       .from('despesas')
-      .insert({ usuario_id: user.id, nome, valor, is_fixa: true })
+      .upsert(
+        { usuario_id: user.id, nome, valor, is_fixa: true },
+        { onConflict: 'usuario_id,nome', ignoreDuplicates: false }
+      )
       .select()
       .single()
 
     if (err) { error.value = err.message; return }
-    despesas.value.push(data)
+    const exists = despesas.value.find(d => d.id === data.id)
+    if (exists) { Object.assign(exists, data) } else { despesas.value.push(data) }
     await _addTransacao('despesa', nome, valor, data.id, user.id)
   }
 
@@ -112,12 +120,16 @@ export function useDashboardData() {
 
     const { data, error: err } = await supabase
       .from('despesas')
-      .insert({ usuario_id: user.id, nome, valor, is_fixa: false })
+      .upsert(
+        { usuario_id: user.id, nome, valor, is_fixa: false },
+        { onConflict: 'usuario_id,nome', ignoreDuplicates: false }
+      )
       .select()
       .single()
 
     if (err) { error.value = err.message; return }
-    despesasAvulsas.value.push(data)
+    const exists = despesasAvulsas.value.find(d => d.id === data.id)
+    if (exists) { Object.assign(exists, data) } else { despesasAvulsas.value.push(data) }
     await _addTransacao('despesa', nome, valor, data.id, user.id)
   }
 

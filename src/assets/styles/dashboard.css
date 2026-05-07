@@ -295,6 +295,30 @@
   flex-direction: column;
 }
 
+/* Toast de erro */
+.error-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(30, 10, 20, 0.92);
+  border: 1px solid rgba(255, 133, 153, 0.4);
+  color: var(--danger-soft);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  max-width: 90%;
+  white-space: nowrap;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
 /* Banner de onboarding */
 .onboarding-banner {
   margin-bottom: 28px;

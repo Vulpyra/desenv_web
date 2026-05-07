@@ -24,7 +24,7 @@ const { signOut } = useAuth()
 const { parseCurrency } = useCurrency()
 const {
   patrimonio, rendas, despesas, despesasAvulsas, metas, transacoes, historico,
-  totalRenda, totalDespesa,
+  totalRenda, totalDespesa, error: dashError,
   load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addHistorico,
   removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll,
   clearDespesas, clearTransacoes, clearHistorico
@@ -216,6 +216,12 @@ onMounted(load)
 
   <div class="dashboard-shell">
     <span class="particle-stream" aria-hidden="true"></span>
+
+    <div v-if="dashError" class="error-toast" @click="dashError = null">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ dashError }}
+      <i class="fas fa-times" style="margin-left: auto"></i>
+    </div>
 
     <div class="dashboard">
       <!-- Header -->
