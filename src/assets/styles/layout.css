@@ -5,7 +5,9 @@
 /* Container principal */
 .dashboard-shell {
   position: relative;
-  width: min(1080px, 100%);
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
   z-index: 1;
 }
 
@@ -65,6 +67,7 @@
   padding: 32px;
   border-radius: 26px;
   color: var(--text-main);
+  flex: 1;
 }
 
 .dashboard::before {

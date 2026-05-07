@@ -4,20 +4,15 @@
 
 /* Desktop grande */
 @media (min-width: 1401px) {
-  body {
-    align-items: center;
+  .dashboard {
+    padding: 40px 60px;
   }
 }
 
 /* Laptops e tablets grandes */
 @media (max-width: 1200px) {
-  .dashboard-shell,
-  .simulado-shell {
-    width: min(1000px, 100%);
-  }
-
   .dashboard {
-    padding: 28px;
+    padding: 32px 40px;
   }
 
   .stats-grid {
@@ -32,8 +27,6 @@
 /* Tablets */
 @media (max-width: 992px) {
   body {
-    align-items: flex-start;
-    padding: 16px;
     font-size: 14px;
   }
 
@@ -364,13 +357,11 @@
 /* Celulares médios */
 @media (max-width: 576px) {
   body {
-    padding: 8px;
     font-size: 13px;
   }
 
   .dashboard {
-    padding: 16px;
-    border-radius: 18px;
+    padding: 20px;
   }
 
   .top-bar {
@@ -484,13 +475,8 @@
 
 /* Celulares pequenos */
 @media (max-width: 480px) {
-  body {
-    padding: 6px;
-  }
-
   .dashboard {
-    padding: 14px;
-    border-radius: 16px;
+    padding: 16px;
   }
 
   .top-bar {
@@ -624,11 +610,6 @@
 
 /* Orientação paisagem em mobile */
 @media (max-height: 500px) and (orientation: landscape) {
-  body {
-    align-items: flex-start;
-    padding: 10px;
-  }
-
   .dashboard {
     padding: 18px;
   }
