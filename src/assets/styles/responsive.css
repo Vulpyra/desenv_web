@@ -24,6 +24,30 @@
   }
 }
 
+/* Intermediário amplo: 1100-1300px */
+@media (max-width: 1300px) {
+  .dashboard {
+    padding: 28px 36px;
+  }
+
+  .main-content,
+  .bottom-content {
+    gap: 20px;
+  }
+
+  .stats-grid {
+    gap: 16px;
+  }
+
+  .stat-card .value {
+    font-size: 1.2rem;
+  }
+
+  .glass-panel {
+    padding: 22px;
+  }
+}
+
 /* Intermediário: evitar truncamento entre 900-1100px */
 @media (max-width: 1100px) {
   .panel-title {
