@@ -1,17 +1,18 @@
 import { ref } from 'vue'
+import { supabase } from '@/lib/supabase'
 
 const DEFAULT_PROFILE = {
-  name: 'Usuário',
-  email: 'usuario@email.com',
-  avatar: null,
-  createdAt: '2024-01-15'
+  nome: 'Usuário',
+  email: '',
+  avatar_url: null,
+  criado_em: null
 }
 
 const DEFAULT_PREFERENCES = {
-  currency: 'BRL',
-  theme: 'dark',
-  notifications: true,
-  hideValues: false
+  moeda: 'BRL',
+  tema: 'dark',
+  notificacoes: true,
+  ocultar_valores: false
 }
 
 export function useProfile() {
@@ -20,11 +21,46 @@ export function useProfile() {
   const isLoading = ref(false)
   const error = ref(null)
 
+  const load = async () => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const [{ data: profileData }, { data: prefData }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('preferencias').select('*').eq('usuario_id', user.id).single()
+      ])
+
+      if (profileData) {
+        profile.value = { ...profileData, email: user.email }
+      } else {
+        profile.value = { ...DEFAULT_PROFILE, email: user.email, criado_em: user.created_at }
+      }
+
+      if (prefData) {
+        preferences.value = prefData
+      }
+    } catch (err) {
+      error.value = err.message
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const updateProfile = async (data) => {
     isLoading.value = true
     error.value = null
     try {
-      // TODO: Integrar com API
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { success: false }
+
+      const { error: err } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, ...data, atualizado_em: new Date().toISOString() })
+
+      if (err) throw err
       profile.value = { ...profile.value, ...data }
       return { success: true }
     } catch (err) {
@@ -39,7 +75,14 @@ export function useProfile() {
     isLoading.value = true
     error.value = null
     try {
-      // TODO: Integrar com API ou localStorage
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { success: false }
+
+      const { error: err } = await supabase
+        .from('preferencias')
+        .upsert({ usuario_id: user.id, ...data })
+
+      if (err) throw err
       preferences.value = { ...preferences.value, ...data }
       return { success: true }
     } catch (err) {
@@ -51,22 +94,17 @@ export function useProfile() {
   }
 
   const saveAll = async () => {
-    isLoading.value = true
-    error.value = null
-    try {
-      // TODO: Salvar no backend
-      await new Promise(resolve => setTimeout(resolve, 500))
-      return { success: true }
-    } catch (err) {
-      error.value = err.message
-      return { success: false, error: err.message }
-    } finally {
-      isLoading.value = false
+    const [resProfile, resPref] = await Promise.all([
+      updateProfile(profile.value),
+      updatePreferences(preferences.value)
+    ])
+    if (!resProfile.success || !resPref.success) {
+      return { success: false, error: error.value }
     }
+    return { success: true }
   }
 
   const deleteAccount = async () => {
-    // TODO: Implementar exclusão de conta
     return { success: false, message: 'Funcionalidade não implementada' }
   }
 
@@ -75,6 +113,7 @@ export function useProfile() {
     preferences,
     isLoading,
     error,
+    load,
     updateProfile,
     updatePreferences,
     saveAll,
