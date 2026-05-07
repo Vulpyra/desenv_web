@@ -241,12 +241,18 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .transaction-title {
   color: var(--text-main);
   font-weight: 500;
   font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .transaction-date {
@@ -257,6 +263,9 @@
 .transaction-value {
   font-weight: 700;
   font-size: 1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .transaction-value.positive {
