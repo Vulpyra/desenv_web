@@ -83,10 +83,7 @@ const handleSignOut = async () => {
 }
 
 // Handlers de Modal
-const handleConfirm = (result) => {
-  if (!result?.confirmed || !result.values) return
-
-  const values = result.values
+const handleConfirm = (values) => {
   const nome = (val) => (typeof val === 'string' ? val.trim() : '')
   const valor = (val) => (typeof val === 'number' && !isNaN(val) && val > 0 ? val : null)
 
@@ -118,6 +115,18 @@ const handleConfirm = (result) => {
         addHistorico(nome(values[0]), values[1])
       }
       break
+    case 'confirmClearAll':
+      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'EXCLUIR') clearAll()
+      break
+    case 'confirmClearDespesas':
+      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'SIM') clearDespesas()
+      break
+    case 'confirmClearTransacoes':
+      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'SIM') clearTransacoes()
+      break
+    case 'confirmClearHistorico':
+      if (typeof values[0] === 'string' && values[0].trim().toUpperCase() === 'SIM') clearHistorico()
+      break
   }
   close()
 }
@@ -125,93 +134,73 @@ const handleConfirm = (result) => {
 // Ações do modal
 const modalAction = ref('')
 
-const openEditPatrimonio = async () => {
+const openEditPatrimonio = () => {
   modalAction.value = 'patrimonio'
-  await open('Editar Patrimônio', [
+  open('Editar Patrimônio', [
     { placeholder: 'Novo valor do Patrimônio', value: patrimonio.value, isCurrency: true }
   ])
 }
 
-const openAddRenda = async () => {
+const openAddRenda = () => {
   modalAction.value = 'renda'
-  await open('Adicionar Renda', [
+  open('Adicionar Renda', [
     { placeholder: 'Nome da origem (ex: Salário)' },
     { placeholder: 'Valor da Renda', isCurrency: true }
   ])
 }
 
-const openAddDespesaFixa = async () => {
+const openAddDespesaFixa = () => {
   modalAction.value = 'despesaFixa'
-  await open('Nova Despesa Fixa', [
+  open('Nova Despesa Fixa', [
     { placeholder: 'Nome da despesa (ex: Aluguel)' },
     { placeholder: 'Valor da despesa', isCurrency: true }
   ])
 }
 
-const openAddDespesaAvulsa = async () => {
+const openAddDespesaAvulsa = () => {
   modalAction.value = 'despesaAvulsa'
-  await open('Despesa Avulsa', [
+  open('Despesa Avulsa', [
     { placeholder: 'Motivo (ex: Uber, Lanche)' },
     { placeholder: 'Valor da despesa', isCurrency: true }
   ])
 }
 
-const openAddMeta = async () => {
+const openAddMeta = () => {
   modalAction.value = 'meta'
-  await open('Nova Meta', [
+  open('Nova Meta', [
     { placeholder: 'Nome da Meta (ex: Viagem)' },
     { placeholder: 'Valor alvo/total', isCurrency: true },
     { placeholder: 'Valor atual guardado', isCurrency: true }
   ])
 }
 
-const openAddHistorico = async () => {
+const openAddHistorico = () => {
   modalAction.value = 'historico'
-  await open('Adicionar Evolução', [
+  open('Adicionar Evolução', [
     { placeholder: 'Mês (ex: Abr)' },
     { placeholder: 'Patrimônio no mês', isCurrency: true }
   ])
 }
 
 // Ações de confirmação usando modal
-const confirmClearAll = async () => {
+const confirmClearAll = () => {
   modalAction.value = 'confirmClearAll'
-  const result = await open('ATENÇÃO', [
-    { placeholder: 'Digite EXCLUIR para confirmar' }
-  ])
-  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'EXCLUIR') {
-    clearAll()
-  }
+  open('ATENÇÃO', [{ placeholder: 'Digite EXCLUIR para confirmar' }])
 }
 
-const confirmClearDespesas = async () => {
+const confirmClearDespesas = () => {
   modalAction.value = 'confirmClearDespesas'
-  const result = await open('Confirmar', [
-    { placeholder: 'Digite SIM para apagar todas as despesas' }
-  ])
-  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
-    await clearDespesas()
-  }
+  open('Confirmar', [{ placeholder: 'Digite SIM para apagar todas as despesas' }])
 }
 
-const confirmClearTransacoes = async () => {
+const confirmClearTransacoes = () => {
   modalAction.value = 'confirmClearTransacoes'
-  const result = await open('Confirmar', [
-    { placeholder: 'Digite SIM para limpar transações' }
-  ])
-  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
-    await clearTransacoes()
-  }
+  open('Confirmar', [{ placeholder: 'Digite SIM para limpar transações' }])
 }
 
-const confirmClearHistorico = async () => {
+const confirmClearHistorico = () => {
   modalAction.value = 'confirmClearHistorico'
-  const result = await open('Confirmar', [
-    { placeholder: 'Digite SIM para limpar histórico' }
-  ])
-  if (result?.confirmed && result.values?.[0]?.trim().toUpperCase() === 'SIM') {
-    await clearHistorico()
-  }
+  open('Confirmar', [{ placeholder: 'Digite SIM para limpar histórico' }])
 }
 
 onMounted(load)
