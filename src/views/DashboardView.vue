@@ -88,9 +88,11 @@ const pieData = computed(() => {
   const r = totalRenda.value
   const d = totalDespesa.value
   if (r === 0 && d === 0) return [1, 1]
-  return [r, d]
+  const saldo = Math.max(r - d, 0)
+  const despesasEfetivas = Math.min(d, r)
+  return [despesasEfetivas, saldo]
 })
-const pieLabels = computed(() => ['Renda', 'Despesas'])
+const pieLabels = computed(() => ['Despesas', 'Saldo'])
 
 const toggleVisibilidade = () => {
   valoresOcultos.value = !valoresOcultos.value

@@ -25,8 +25,8 @@ const buildChart = () => {
   if (chartInstance) { chartInstance.destroy(); chartInstance = null }
 
   const rootStyles = getComputedStyle(document.documentElement)
-  const colorA = rootStyles.getPropertyValue('--chart-a').trim()
-  const colorB = rootStyles.getPropertyValue('--chart-b').trim()
+  const colorDanger = rootStyles.getPropertyValue('--danger-soft').trim() || 'rgba(255, 133, 153, 0.85)'
+  const colorSaldo = rootStyles.getPropertyValue('--chart-b').trim() || 'rgba(113, 194, 217, 0.85)'
   const bgColor = rootStyles.getPropertyValue('--bg-mid').trim()
 
   chartInstance = new Chart(canvasRef.value.getContext('2d'), {
@@ -35,7 +35,7 @@ const buildChart = () => {
       labels: props.labels,
       datasets: [{
         data: props.data,
-        backgroundColor: [colorA, colorB],
+        backgroundColor: [colorDanger, colorSaldo],
         borderWidth: 3,
         borderColor: bgColor
       }]
@@ -49,9 +49,18 @@ const buildChart = () => {
   })
 }
 
-onMounted(buildChart)
+const updateChart = () => {
+  if (!chartInstance) {
+    buildChart()
+    return
+  }
+  chartInstance.data.labels = [...props.labels]
+  chartInstance.data.datasets[0].data = [...props.data]
+  chartInstance.update()
+}
 
-watch(() => props.data, buildChart, { deep: true })
+onMounted(buildChart)
+watch(() => props.data, updateChart, { deep: true })
 </script>
 
 <template>
@@ -62,11 +71,11 @@ watch(() => props.data, buildChart, { deep: true })
     <div class="chart-labels">
       <div class="label-item left">
         <p>{{ labels[0] }}</p>
-        <span>{{ percentages[0] }}%</span>
+        <span style="color: var(--danger-soft)">{{ percentages[0] }}%</span>
       </div>
       <div class="label-item right">
         <p>{{ labels[1] }}</p>
-        <span>{{ percentages[1] }}%</span>
+        <span style="color: var(--accent-cyan)">{{ percentages[1] }}%</span>
       </div>
     </div>
   </div>
