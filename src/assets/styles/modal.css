@@ -1,0 +1,62 @@
+/* ========================================
+   MODAL.CSS - Estilos do modal
+   ======================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 11, 29, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+  display: none;
+  opacity: 0;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 420px;
+  padding: 30px;
+  border: 1px solid rgba(130, 185, 230, 0.35);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  transform: translateY(0);
+  animation: modalSlideIn 0.3s ease-out forwards;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.modal-input {
+  background: rgba(10, 22, 52, 0.4);
+  border: 1px solid rgba(130, 185, 230, 0.25);
+  color: var(--text-main);
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+  transition: 0.2s;
+}
+
+.modal-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(113, 194, 217, 0.15);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
