@@ -1,17 +1,18 @@
 import { ref } from 'vue'
+import { supabase } from '@/lib/supabase'
 
 const DEFAULT_PROFILE = {
-  name: 'Usuário',
-  email: 'usuario@email.com',
-  avatar: null,
-  createdAt: '2024-01-15'
+  nome: 'Usuário',
+  email: '',
+  avatar_url: null,
+  criado_em: null
 }
 
 const DEFAULT_PREFERENCES = {
-  currency: 'BRL',
-  theme: 'dark',
-  notifications: true,
-  hideValues: false
+  moeda: 'BRL',
+  tema: 'dark',
+  notificacoes: true,
+  ocultar_valores: false
 }
 
 export function useProfile() {
@@ -20,12 +21,42 @@ export function useProfile() {
   const isLoading = ref(false)
   const error = ref(null)
 
+  const load = async () => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profileData } = await supabase
+        .from('profiles').select('*').eq('id', user.id).single()
+
+      if (profileData) {
+        profile.value = { ...profileData, email: user.email }
+      } else {
+        profile.value = { ...DEFAULT_PROFILE, email: user.email, criado_em: user.created_at }
+      }
+    } catch (err) {
+      error.value = err.message
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const updateProfile = async (data) => {
     isLoading.value = true
     error.value = null
     try {
-      // TODO: Integrar com API
-      profile.value = { ...profile.value, ...data }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { success: false }
+
+      const { nome, avatar_url } = data
+      const { error: err } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, nome, avatar_url, atualizado_em: new Date().toISOString() })
+
+      if (err) throw err
+      profile.value = { ...profile.value, nome, avatar_url }
       return { success: true }
     } catch (err) {
       error.value = err.message
@@ -35,38 +66,18 @@ export function useProfile() {
     }
   }
 
-  const updatePreferences = async (data) => {
-    isLoading.value = true
-    error.value = null
-    try {
-      // TODO: Integrar com API ou localStorage
-      preferences.value = { ...preferences.value, ...data }
-      return { success: true }
-    } catch (err) {
-      error.value = err.message
-      return { success: false, error: err.message }
-    } finally {
-      isLoading.value = false
-    }
+  const updatePreferences = (data) => {
+    preferences.value = { ...preferences.value, ...data }
+    return { success: true }
   }
 
   const saveAll = async () => {
-    isLoading.value = true
-    error.value = null
-    try {
-      // TODO: Salvar no backend
-      await new Promise(resolve => setTimeout(resolve, 500))
-      return { success: true }
-    } catch (err) {
-      error.value = err.message
-      return { success: false, error: err.message }
-    } finally {
-      isLoading.value = false
-    }
+    const res = await updateProfile(profile.value)
+    if (!res.success) return { success: false, error: error.value }
+    return { success: true }
   }
 
   const deleteAccount = async () => {
-    // TODO: Implementar exclusão de conta
     return { success: false, message: 'Funcionalidade não implementada' }
   }
 
@@ -75,6 +86,7 @@ export function useProfile() {
     preferences,
     isLoading,
     error,
+    load,
     updateProfile,
     updatePreferences,
     saveAll,

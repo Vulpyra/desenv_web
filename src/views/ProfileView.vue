@@ -1,8 +1,20 @@
 <script setup>
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ProfileHeader, ProfileInfoCard, ProfilePreferences, ProfileActions } from '@/components'
 import { useProfile } from '@/composables'
+import { useAuth } from '@/composables/useAuth'
 
-const { profile, preferences, isLoading, saveAll, deleteAccount } = useProfile()
+const router = useRouter()
+const { signOut } = useAuth()
+const { profile, preferences, isLoading, load, saveAll, deleteAccount, updatePreferences } = useProfile()
+
+onMounted(load)
+
+const handleSignOut = async () => {
+  await signOut()
+  router.push('/auth')
+}
 
 const handleSave = async () => {
   const result = await saveAll()
@@ -37,25 +49,25 @@ const handleChangePhoto = () => {
     <span class="particle-stream" aria-hidden="true"></span>
 
     <div class="dashboard profile-page">
-      <ProfileHeader />
+      <ProfileHeader @sign-out="handleSignOut" />
 
       <main class="profile-content">
         <h1 class="page-title">Meu Perfil</h1>
 
         <ProfileInfoCard
-          :name="profile.name"
+          :name="profile.nome"
           :email="profile.email"
-          :created-at="profile.createdAt"
-          :avatar="profile.avatar"
+          :created-at="profile.criado_em"
+          :avatar="profile.avatar_url"
           @change-photo="handleChangePhoto"
         />
 
         <ProfilePreferences
           :preferences="preferences"
-          @update:currency="preferences.currency = $event"
-          @update:theme="preferences.theme = $event"
-          @update:notifications="preferences.notifications = $event"
-          @update:hideValues="preferences.hideValues = $event"
+          @update:currency="updatePreferences({ moeda: $event })"
+          @update:theme="updatePreferences({ tema: $event })"
+          @update:notifications="updatePreferences({ notificacoes: $event })"
+          @update:hideValues="updatePreferences({ ocultar_valores: $event })"
         />
 
         <ProfileActions
@@ -68,23 +80,3 @@ const handleChangePhoto = () => {
   </div>
 </template>
 
-<style scoped>
-.profile-page {
-  padding: 24px;
-}
-
-.page-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: var(--text-primary);
-}
-
-.profile-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-</style>

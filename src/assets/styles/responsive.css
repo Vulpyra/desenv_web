@@ -24,6 +24,98 @@
   }
 }
 
+/* Intermediário amplo: 1100-1300px */
+@media (max-width: 1300px) {
+  .dashboard {
+    padding: 28px 36px;
+  }
+
+  .main-content,
+  .bottom-content {
+    gap: 20px;
+  }
+
+  .stats-grid {
+    gap: 16px;
+  }
+
+  .stat-card .value {
+    font-size: 1.2rem;
+  }
+
+  .glass-panel {
+    padding: 22px;
+  }
+}
+
+/* Intermediário crítico: evitar colunas estreitas (1000-1150px) */
+@media (max-width: 1150px) {
+  .dashboard {
+    padding: 24px 28px;
+  }
+
+  .stats-grid {
+    gap: 14px;
+  }
+
+  .main-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .main-content > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .bottom-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .bottom-content > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .chart-section,
+  .glass-panel {
+    padding: 20px;
+  }
+}
+
+/* Intermediário: evitar truncamento entre 900-1100px */
+@media (max-width: 1100px) {
+  .panel-title {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .panel-header {
+    gap: 8px;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quick-actions .btn-outline {
+    width: 100%;
+  }
+
+  .goal-values {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .goal-pct {
+    margin-left: 0;
+  }
+}
+
 /* Tablets */
 @media (max-width: 992px) {
   body {
@@ -57,7 +149,26 @@
 
   .main-content {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
+  }
+
+  .sidebar-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .sidebar-actions .ai-suggestion-box {
+    width: 100%;
+  }
+
+  .sidebar-actions .btn-main-action {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .sidebar-actions .btn-outline:last-child {
+    width: 100%;
   }
 
   .bottom-content {
