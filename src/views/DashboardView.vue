@@ -262,7 +262,10 @@ onMounted(load)
 
       <!-- Conteúdo principal -->
       <section class="main-content">
-        <PieChart :data="[45, 55]" />
+        <PieChart
+          :data="[totalRenda, totalDespesa]"
+          :labels="['Renda mensal', 'Despesas mensais']"
+        />
         
         <IncomeDetails
           :rendas="rendas"

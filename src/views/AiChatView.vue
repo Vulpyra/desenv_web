@@ -230,8 +230,8 @@ const handleFileChange = (event) => {
             :disabled="isSending"
           >
 
-          <button class="chat-deploy-button" type="button">
-            Deploy
+          <button class="chat-deploy-button" type="button" @click="sendMessage">
+            Enviar
           </button>
         </div>
 

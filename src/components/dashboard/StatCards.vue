@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import StatCard from './StatCard.vue'
 import { useCurrency } from '@/composables/useCurrency'
 
@@ -17,6 +18,12 @@ const emit = defineEmits([
 ])
 
 const { formatCurrency } = useCurrency()
+const declaredLimit = 5000
+const declaredValue = computed(() => (typeof props.totalRenda === 'number' ? props.totalRenda : 0))
+const declaredProgress = computed(() => {
+  if (!declaredLimit || declaredLimit <= 0) return 0
+  return Math.min((declaredValue.value / declaredLimit) * 100, 100)
+})
 </script>
 
 <template>
@@ -47,13 +54,13 @@ const { formatCurrency } = useCurrency()
     />
     <StatCard
       label="Renda declarada"
-      value="R$ 890,00"
-      muted-label="Limite Isenção"
+      value="—"
+      muted-label="Limite 5.000"
       :is-hidden="isHidden"
-      :progress="68"
+      :progress="declaredProgress"
     >
       <template #suffix>
-        <span class="value-max">/ R$ 1.300,00</span>
+        <span class="value-max">/ {{ formatCurrency(declaredLimit) }}</span>
       </template>
     </StatCard>
   </section>
