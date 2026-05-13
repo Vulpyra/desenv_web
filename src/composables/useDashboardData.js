@@ -4,6 +4,7 @@ import { useCurrency } from './useCurrency'
 
 let idCounter = Date.now()
 const generateId = () => ++idCounter
+const monthOrder = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
 export function useDashboardData() {
   const { loadData, saveData, clearData } = useLocalStorage()
@@ -29,6 +30,22 @@ export function useDashboardData() {
   )
 
   const saldo = computed(() => totalRenda.value - totalDespesa.value)
+
+  const applyRendaDestino = (valor, destino) => {
+    if (typeof valor !== 'number' || isNaN(valor) || valor <= 0) return
+
+    if (destino?.type === 'meta') {
+      const metaId = Number(destino?.metaId)
+      const meta = metas.value.find((item) => item.id === metaId)
+      if (meta) {
+        const atual = typeof meta.atual === 'number' && !isNaN(meta.atual) ? meta.atual : 0
+        meta.atual = atual + valor
+        return
+      }
+    }
+
+    patrimonio.value += valor
+  }
 
   // Carregar dados
   const load = () => {
@@ -65,16 +82,19 @@ export function useDashboardData() {
   )
 
   // Ações
-  const addRenda = (nome, valor) => {
+  const addRenda = (nome, valor, destino = { type: 'patrimonio' }) => {
     const id = generateId()
     rendas.value.push({
       id,
       nome,
       valor,
+      destino: destino?.type === 'meta' ? 'meta' : 'patrimonio',
+      destinoId: destino?.type === 'meta' ? destino?.metaId ?? null : null,
       icone: 'fa-money-bill-wave',
       cor: 'var(--accent-cyan)'
     })
     addTransacao('renda', nome, valor, id)
+    applyRendaDestino(valor, destino)
   }
 
   const addDespesaFixa = (nome, valor) => {
@@ -121,8 +141,31 @@ export function useDashboardData() {
   }
 
   const addHistorico = (mes, valor) => {
-    historico.value.labels.push(mes)
-    historico.value.dados.push(valor)
+    const labels = [...historico.value.labels]
+    const dados = [...historico.value.dados]
+    const index = labels.findIndex((label) => label === mes)
+    if (index >= 0) {
+      dados[index] = valor
+    } else {
+      labels.push(mes)
+      dados.push(valor)
+    }
+    const entries = labels.map((label, i) => ({
+      label,
+      value: dados[i]
+    }))
+    entries.sort((a, b) => {
+      const aIndex = monthOrder.indexOf(a.label)
+      const bIndex = monthOrder.indexOf(b.label)
+      if (aIndex === -1 && bIndex === -1) return a.label.localeCompare(b.label)
+      if (aIndex === -1) return 1
+      if (bIndex === -1) return -1
+      return aIndex - bIndex
+    })
+    historico.value = {
+      labels: entries.map((entry) => entry.label),
+      dados: entries.map((entry) => entry.value)
+    }
   }
 
   // Remover

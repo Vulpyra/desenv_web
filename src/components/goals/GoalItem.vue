@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useCurrency } from '@/composables/useCurrency'
 
 const props = defineProps({
   meta: Object,
@@ -7,6 +8,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['remove'])
+
+const { formatCurrency } = useCurrency()
 
 const porcentagem = computed(() => {
   if (!props.meta.alvo || props.meta.alvo <= 0) return '0.0'

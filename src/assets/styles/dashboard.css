@@ -149,6 +149,12 @@
   display: block;
   text-decoration: none;
   color: inherit;
+  background: transparent;
+  border: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
 }
 
 .ai-suggestion-link:hover,

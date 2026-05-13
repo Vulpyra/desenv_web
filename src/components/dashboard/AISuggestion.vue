@@ -1,4 +1,12 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goToAiChat = () => {
+  router.push('/chat-ia')
+}
+
 defineProps({
   icon: {
     type: String,
@@ -16,10 +24,11 @@ defineProps({
 </script>
 
 <template>
-  <RouterLink
-    to="/chat-ia"
+  <button
+    type="button"
     class="ai-suggestion-box ai-suggestion-link"
     aria-label="Abrir chat com IA"
+    @click="goToAiChat"
   >
     <div class="ai-header">
       <div class="icon-circle">
@@ -32,5 +41,5 @@ defineProps({
       Conversar com a IA
       <i class="fas fa-arrow-right"></i>
     </span>
-  </RouterLink>
+  </button>
 </template>
