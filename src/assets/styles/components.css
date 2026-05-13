@@ -1,0 +1,237 @@
+/* ========================================
+   COMPONENTS.CSS - Botões, cards e elementos reutilizáveis
+   ======================================== */
+
+/* Botões principais */
+.btn-main-action {
+  width: 100%;
+  background: linear-gradient(135deg, var(--button-a), var(--button-b));
+  color: #081f35;
+  border: none;
+  padding: 16px;
+  border-radius: 18px;
+  font-size: 1.28rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(62, 132, 206, 0.34);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.btn-main-action:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(80, 154, 219, 0.34);
+}
+
+.btn-main-action:active {
+  transform: translateY(0);
+}
+
+/* Botões outline */
+.btn-outline {
+  flex: 1;
+  min-width: 0;
+  background: rgba(95, 145, 204, 0.08);
+  border: 1px solid rgba(178, 212, 244, 0.24);
+  color: var(--text-main);
+  padding: 13px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.btn-outline:hover {
+  transform: translateY(-2px);
+  background: rgba(111, 167, 221, 0.15);
+  border-color: rgba(201, 224, 245, 0.36);
+}
+
+/* Botões de adicionar */
+.btn-add {
+  background: rgba(113, 194, 217, 0.15);
+  border: 1px solid rgba(113, 194, 217, 0.4);
+  color: var(--accent-cyan);
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: 0.25s;
+  display: grid;
+  place-items: center;
+}
+
+.btn-add:hover {
+  background: rgba(113, 194, 217, 0.3);
+  transform: scale(1.05);
+  border-color: var(--accent-cyan);
+}
+
+/* Botão de remover */
+.btn-remove {
+  background: transparent;
+  border: none;
+  color: var(--danger-soft);
+  cursor: pointer;
+  opacity: 0.4;
+  transition: 0.25s;
+  padding: 5px;
+  margin-left: 10px;
+}
+
+.btn-remove:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Botão de editar ícone */
+.btn-icon-edit {
+  background: transparent;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 5px;
+  transition: 0.2s;
+}
+
+.btn-icon-edit:hover {
+  color: var(--accent-cyan);
+  transform: scale(1.1);
+}
+
+/* Container de ações rápidas */
+.quick-actions {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+/* Círculo de ícone */
+.icon-circle {
+  border: 1px solid rgba(164, 204, 237, 0.24);
+  background: rgba(97, 156, 209, 0.15);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--accent-cyan);
+}
+
+/* Painel header e título */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+  min-width: 0;
+}
+
+.panel-title {
+  color: var(--text-title);
+  font-size: 1.1rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Campos de formulário */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field span {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid rgba(178, 212, 244, 0.22);
+  background: rgba(7, 16, 38, 0.34);
+  color: var(--text-title);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 116px;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(221, 234, 250, 0.45);
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: rgba(167, 220, 255, 0.5);
+  box-shadow: 0 0 0 4px rgba(97, 156, 209, 0.16);
+  transform: translateY(-1px);
+}
+
+/* Grid de campos */
+.field-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.three-cols {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.full-span {
+  grid-column: 1 / -1;
+}
+
+/* Ações do formulário */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.form-actions .btn-outline,
+.form-actions .btn-main-action {
+  flex: 1;
+  height: 52px;
+}
+
+/* Títulos de seção */
+.section-heading p {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+
+.section-heading h2 {
+  font-size: 1.1rem;
+  color: var(--text-title);
+  font-weight: 800;
+}
+
+.spacing-top {
+  margin-top: 24px;
+}
