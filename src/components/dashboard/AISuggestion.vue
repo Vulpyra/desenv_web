@@ -6,7 +6,7 @@ defineProps({
   },
   title: {
     type: String,
-    default: 'Sugestão da IA'
+    default: 'Sugestao de IA'
   },
   suggestion: {
     type: String,
@@ -16,7 +16,11 @@ defineProps({
 </script>
 
 <template>
-  <div class="ai-suggestion-box">
+  <RouterLink
+    to="/chat-ia"
+    class="ai-suggestion-box ai-suggestion-link"
+    aria-label="Abrir chat com IA"
+  >
     <div class="ai-header">
       <div class="icon-circle">
         <i class="fas" :class="icon"></i>
@@ -24,5 +28,9 @@ defineProps({
       <h3>{{ title }}</h3>
     </div>
     <p>{{ suggestion }}</p>
-  </div>
+    <span class="ai-suggestion-cta">
+      Conversar com a IA
+      <i class="fas fa-arrow-right"></i>
+    </span>
+  </RouterLink>
 </template>
