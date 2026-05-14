@@ -88,6 +88,7 @@
     grid-template-columns: 1fr;
   }
 
+
   .three-cols {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -338,6 +339,23 @@
     height: min(180px, 100%);
   }
 
+  .chat-status {
+    font-size: 0.82rem;
+    padding: 6px 12px;
+  }
+
+  .chat-text-input {
+    padding: 14px 110px 14px 116px;
+  }
+
+  .chat-file-button span {
+    display: none;
+  }
+
+  .chat-deploy-button {
+    padding: 9px 14px;
+  }
+
   .orb-a {
     width: 280px;
     height: 280px;
@@ -470,6 +488,20 @@
 
   .modal-actions button {
     width: 100%;
+  }
+
+  .chat-text-input {
+    padding: 14px 96px 14px 54px;
+  }
+
+  .chat-file-button {
+    padding: 7px 10px;
+    border-radius: 10px;
+  }
+
+  .chat-deploy-button {
+    padding: 8px 12px;
+    border-radius: 10px;
   }
 }
 

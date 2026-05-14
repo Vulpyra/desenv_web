@@ -1,9 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import DashboardView from '../views/DashboardView.vue'
 import SimuladoView from '../views/SimuladoView.vue'
+import AiChatView from '../views/AiChatView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/simulado',
       name: 'simulado',
       component: SimuladoView,
+    },
+    {
+      path: '/chat-ia',
+      name: 'chat-ia',
+      component: AiChatView,
     },
   ],
 })
