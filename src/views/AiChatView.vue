@@ -3,7 +3,7 @@ import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const apiUrl = import.meta.env.VITE_AI_API_URL || 'https://general-server.playit.plus'
+const apiUrl = import.meta.env.VITE_AI_API_URL || 'http://general-server.playit.plus'
 const apiMode = (import.meta.env.VITE_AI_API_MODE || 'auto').toLowerCase()
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const getWaitTimeMs = () => Math.floor(30000 + Math.random() * 30001)
