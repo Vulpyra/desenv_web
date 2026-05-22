@@ -60,10 +60,9 @@ export function useProfile() {
       if (!user) return { success: false }
 
       const { nome, avatar_url } = data
-      const { moeda, tema, notificacoes, ocultar_valores } = preferences.value
       const { error: err } = await supabase
         .from('profiles')
-        .upsert({ id: user.id, nome, avatar_url, moeda, tema, notificacoes, ocultar_valores, atualizado_em: new Date().toISOString() })
+        .upsert({ id: user.id, nome, avatar_url, atualizado_em: new Date().toISOString() })
 
       if (err) throw err
       profile.value = { ...profile.value, nome, avatar_url }
@@ -81,9 +80,31 @@ export function useProfile() {
     return { success: true }
   }
 
+  const savePreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { success: false }
+
+      const { moeda, tema, notificacoes, ocultar_valores } = preferences.value
+      const { error: err } = await supabase
+        .from('preferencias')
+        .upsert({ usuario_id: user.id, moeda, tema, notificacoes, ocultar_valores })
+
+      if (err) throw err
+      return { success: true }
+    } catch (err) {
+      error.value = err.message
+      return { success: false, error: err.message }
+    }
+  }
+
   const saveAll = async () => {
-    const res = await updateProfile(profile.value)
-    if (!res.success) return { success: false, error: error.value }
+    const [profileRes, prefsRes] = await Promise.all([
+      updateProfile(profile.value),
+      savePreferences()
+    ])
+    if (!profileRes.success) return { success: false, error: error.value }
+    if (!prefsRes.success) return { success: false, error: error.value }
     return { success: true }
   }
 
