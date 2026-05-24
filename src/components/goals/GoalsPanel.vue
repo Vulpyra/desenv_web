@@ -1,5 +1,6 @@
 <script setup>
 import GoalItem from './GoalItem.vue'
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 defineProps({
   metas: Array,
@@ -12,7 +13,10 @@ defineEmits(['add', 'remove'])
 <template>
   <div class="glass-panel goals-panel">
     <div class="panel-header">
-      <h3 class="panel-title">Metas Financeiras</h3>
+      <GlossaryTerm
+        term="Metas Financeiras"
+        explanation="Objetivos de economia ou compra que você quer alcançar ao longo do tempo."
+      />
       <button class="btn-add" @click="$emit('add')" title="Adicionar Meta">
         <i class="fas fa-plus"></i>
       </button>

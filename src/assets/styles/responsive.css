@@ -81,6 +81,14 @@
   .glass-panel {
     padding: 20px;
   }
+
+  .glossary-strip {
+    flex-direction: column;
+  }
+
+  .glossary-strip__terms {
+    justify-content: flex-start;
+  }
 }
 
 /* Intermediário: evitar truncamento entre 900-1100px */

@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 const props = defineProps({
   rendas: Array,
@@ -35,7 +36,10 @@ const items = computed(() => {
 <template>
   <div class="glass-panel income-details">
     <div class="panel-header">
-      <h3 class="panel-title">Receitas e Despesas Fixas</h3>
+      <GlossaryTerm
+        term="Receitas e Despesas Fixas"
+        explanation="Entradas e saídas recorrentes do mês, como salário, aluguel e assinaturas."
+      />
       <div style="display: flex; gap: 8px">
         <button class="btn-add" @click="$emit('addRenda')" title="Adicionar Renda">
           <i class="fas fa-plus"></i>

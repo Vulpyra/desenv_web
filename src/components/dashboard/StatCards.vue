@@ -30,6 +30,7 @@ const declaredProgress = computed(() => {
   <section class="stats-grid">
     <StatCard
       label="Patrimônio"
+      label-hint="Conjunto de bens, direitos e valores acumulados ao longo do tempo."
       :value="formatCurrency(patrimonio)"
       :is-hidden="isHidden"
       show-edit
@@ -37,6 +38,7 @@ const declaredProgress = computed(() => {
     />
     <StatCard
       label="Renda Mensal"
+      label-hint="Total de entradas de dinheiro recebidas no mês."
       :value="formatCurrency(totalRenda)"
       :is-hidden="isHidden"
       show-add
@@ -44,6 +46,7 @@ const declaredProgress = computed(() => {
     />
     <StatCard
       label="Despesas Mensais"
+      label-hint="Gastos recorrentes que voltam todo mês e reduzem seu saldo."
       :value="formatCurrency(totalDespesa)"
       variant="danger"
       :is-hidden="isHidden"

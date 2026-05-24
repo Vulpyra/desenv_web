@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 const props = defineProps({
   labels: Array,
@@ -108,7 +109,10 @@ onUnmounted(() => {
 <template>
   <div class="glass-panel evolution-panel">
     <div class="panel-header">
-      <h3 class="panel-title">Evolução Patrimonial</h3>
+      <GlossaryTerm
+        term="Evolução Patrimonial"
+        explanation="Acompanhe como seu patrimônio muda ao longo dos meses."
+      />
       <div style="display: flex; gap: 8px">
         <button class="btn-add" @click="$emit('addMes')" title="Adicionar Mês">
           <i class="fas fa-plus"></i>

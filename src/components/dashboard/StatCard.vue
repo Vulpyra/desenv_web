@@ -1,4 +1,6 @@
 <script setup>
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
+
 defineProps({
   label: String,
   value: String,
@@ -6,6 +8,7 @@ defineProps({
     type: String,
     default: 'default' // 'default', 'danger'
   },
+  labelHint: String,
   showEdit: Boolean,
   showAdd: Boolean,
   showClear: Boolean,
@@ -22,7 +25,8 @@ defineEmits(['edit', 'add', 'clear', 'addExpense'])
   <div class="stat-card">
     <div class="card-header-actions">
       <span class="label">
-        {{ label }}
+        <GlossaryTerm v-if="labelHint" :term="label" :explanation="labelHint" />
+        <template v-else>{{ label }}</template>
         <span v-if="mutedLabel" class="label-muted">({{ mutedLabel }})</span>
       </span>
       <div class="actions" style="display: flex; gap: 4px">

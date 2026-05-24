@@ -4,6 +4,7 @@
 
 // Base
 export { default as Modal } from './Modal.vue'
+export { default as GlossaryTerm } from './common/GlossaryTerm.vue'
 
 // Dashboard
 export { default as StatCard } from './dashboard/StatCard.vue'

@@ -16,6 +16,7 @@ import EvolutionChart from '@/components/charts/EvolutionChart.vue'
 import GoalsPanel from '@/components/goals/GoalsPanel.vue'
 import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
 import Modal from '@/components/Modal.vue'
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 const router = useRouter()
 const { signOut } = useAuth()
@@ -82,6 +83,21 @@ const aiSuggestion = computed(() => {
   if (metas.value.length === 0) return `Saldo positivo de ${formatCurrency(saldoAtual)}. Que tal definir uma meta financeira?`
   return `Saldo de ${formatCurrency(saldoAtual)} disponível. Continue assim!`
 })
+
+const glossaryTerms = [
+  {
+    term: 'Elisão fiscal',
+    explanation: 'Planejamento permitido por lei para reduzir a carga tributária.'
+  },
+  {
+    term: 'Base de cálculo',
+    explanation: 'Valor usado como referência para calcular o imposto.'
+  },
+  {
+    term: 'Valor dedutível',
+    explanation: 'Despesa que pode diminuir a base de cálculo do imposto.'
+  }
+]
 
 // Dados reais para o PieChart
 const pieData = computed(() => {
@@ -323,6 +339,24 @@ onMounted(load)
           </li>
         </ol>
       </div>
+
+      <section class="glossary-strip" aria-label="Glossário rápido">
+        <div class="glossary-strip__header">
+          <i class="fas fa-circle-info"></i>
+          <div>
+            <strong>Glossário rápido</strong>
+            <span>Passe o mouse ou use o teclado nos termos para ver uma explicação curta.</span>
+          </div>
+        </div>
+        <div class="glossary-strip__terms">
+          <GlossaryTerm
+            v-for="item in glossaryTerms"
+            :key="item.term"
+            :term="item.term"
+            :explanation="item.explanation"
+          />
+        </div>
+      </section>
 
       <!-- Cards de estatísticas -->
       <StatCards

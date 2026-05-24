@@ -1,5 +1,6 @@
 <script setup>
 import TransactionItem from './TransactionItem.vue'
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 defineProps({
   transacoes: Array,
@@ -12,7 +13,10 @@ defineEmits(['clear', 'remove'])
 <template>
   <div class="glass-panel transactions-panel">
     <div class="panel-header">
-      <h3 class="panel-title">Transações Recentes</h3>
+      <GlossaryTerm
+        term="Transações Recentes"
+        explanation="Últimos lançamentos registrados, como entradas, saídas e ajustes."
+      />
       <button
         class="btn-add"
         @click="$emit('clear')"

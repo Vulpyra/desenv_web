@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 const props = defineProps({
   data: {
@@ -9,6 +10,14 @@ const props = defineProps({
   labels: {
     type: Array,
     default: () => ['Não dedutível', 'Dedutível']
+  },
+  title: {
+    type: String,
+    default: 'Gráfico de Renda'
+  },
+  titleHint: {
+    type: String,
+    default: 'Mostra a divisão entre despesas e saldo com base nos valores atuais.'
   }
 })
 
@@ -66,6 +75,9 @@ watch(() => props.data, updateChart, { deep: true })
 
 <template>
   <div class="chart-section">
+    <div class="panel-header" style="margin-bottom: 18px">
+      <GlossaryTerm :term="title" :explanation="titleHint" />
+    </div>
     <div class="chart-container" style="position: relative; height: 220px; width: 100%; margin: 0 auto;">
       <canvas ref="canvasRef"></canvas>
     </div>
