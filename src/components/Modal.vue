@@ -99,7 +99,7 @@ const confirm = () => {
     if (typeof val === 'string') return val.trim()
     return val
   })
-  emit('confirm', { confirmed: true, values })
+  emit('confirm', values)
 }
 
 const cancel = () => {
