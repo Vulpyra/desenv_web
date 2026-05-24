@@ -52,16 +52,5 @@ const declaredProgress = computed(() => {
       @clear="$emit('clearDespesas')"
       @add-expense="$emit('addDespesa')"
     />
-    <StatCard
-      label="Renda declarada"
-      value="—"
-      muted-label="Limite 5.000"
-      :is-hidden="isHidden"
-      :progress="declaredProgress"
-    >
-      <template #suffix>
-        <span class="value-max">/ {{ formatCurrency(declaredLimit) }}</span>
-      </template>
-    </StatCard>
   </section>
 </template>

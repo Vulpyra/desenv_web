@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
 
+const { formatCurrency } = useCurrency()
+
 const props = defineProps({
   meta: Object,
   isHidden: Boolean
@@ -20,18 +22,19 @@ const porcentagem = computed(() => {
 <template>
   <div class="goal-item">
     <div class="goal-header">
-      <span>
-        <i class="fas" :class="meta.icone" style="margin-right: 8px"></i>
+      <span class="goal-name">
+        <i class="fas" :class="meta.icone"></i>
         {{ meta.nome }}
       </span>
-      <div>
-        <span :class="{ 'value-hidden': isHidden }">
-          {{ formatCurrency(meta.atual) }} / {{ formatCurrency(meta.alvo) }}
-        </span>
-        <button class="btn-remove" @click="$emit('remove', meta.id)" style="margin-left: 5px">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
+      <button class="btn-remove" @click="$emit('remove', meta.id)" title="Remover">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="goal-values" :class="{ 'value-hidden': isHidden }">
+      <span class="goal-atual">{{ formatCurrency(meta.atual) }}</span>
+      <span class="goal-sep">de</span>
+      <span class="goal-alvo">{{ formatCurrency(meta.alvo) }}</span>
+      <span class="goal-pct">{{ porcentagem }}%</span>
     </div>
     <div class="progress-container">
       <div
