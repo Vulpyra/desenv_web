@@ -123,52 +123,36 @@ const handleConfirm = (values) => {
         const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
         addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
       }
-      case 'historico':
-        if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
-          addHistorico(nome(values[0]), values[1])
-        }
-        break
-      case 'confirmClearAll':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'EXCLUIR') {
-          clearAll()
-        }
-        break
-      case 'confirmClearDespesas':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
-          despesas.value = []
-          despesasAvulsas.value = []
-        }
-        break
-      case 'confirmClearTransacoes':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
-          transacoes.value = []
-        }
-        break
-      case 'confirmClearHistorico':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
-          historico.value = { labels: [], dados: [] }
-        }
-        break
-    }
+      break
     case 'historico':
       if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
         addHistorico(nome(values[0]), values[1])
       }
       break
     case 'confirmClearAll':
-      clearAll()
+      if (String(values[0] ?? '').trim().toUpperCase() === 'EXCLUIR') {
+        clearAll()
+      }
       break
     case 'confirmClearDespesas':
-      clearDespesas()
+      if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
+        despesas.value = []
+        despesasAvulsas.value = []
+      }
       break
     case 'confirmClearTransacoes':
-      clearTransacoes()
+      if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
+        transacoes.value = []
+      }
       break
     case 'confirmClearHistorico':
-      clearHistorico()
+      if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
+        historico.value = { labels: [], dados: [] }
+      }
       break
   }
 }
+
 
 // Ações do modal
 const modalAction = ref('')
