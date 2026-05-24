@@ -4,9 +4,10 @@ import DashboardView from '../views/DashboardView.vue'
 import SimuladoView from '../views/SimuladoView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import AuthView from '../views/AuthView.vue'
+import AiChatView from '../views/AiChatView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',
@@ -30,6 +31,11 @@ const router = createRouter({
       path: '/auth',
       name: 'auth',
       component: AuthView,
+    },
+    {
+      path: '/chat-ia',
+      name: 'chat-ia',
+      component: AiChatView,
     },
   ],
 })

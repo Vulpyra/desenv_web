@@ -11,6 +11,8 @@ const props = defineProps({
 
 const emit = defineEmits(['remove'])
 
+const { formatCurrency } = useCurrency()
+
 const porcentagem = computed(() => {
   if (!props.meta.alvo || props.meta.alvo <= 0) return '0.0'
   return Math.min((props.meta.atual / props.meta.alvo) * 100, 100).toFixed(1)

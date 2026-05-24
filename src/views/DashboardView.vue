@@ -100,7 +100,7 @@ const toggleVisibilidade = () => {
 
 // Navegação
 const goToSimulado = () => {
-  window.location.href = '/simulado'
+  router.push('/simulado')
 }
 
 const goToProfile = () => {
@@ -123,22 +123,32 @@ const handleConfirm = (values) => {
         const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
         addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
       }
-      break
-    case 'renda':
-      if (nome(values[0]) && valor(values[1])) addRenda(nome(values[0]), valor(values[1]))
-      break
-    case 'despesaFixa':
-      if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]))
-      break
-    case 'despesaAvulsa':
-      if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]))
-      break
-    case 'meta': {
-      const metaNome = nome(values[0])
-      const metaAlvo = valor(values[1])
-      const metaAtual = typeof values[2] === 'number' && !isNaN(values[2]) && values[2] >= 0 ? values[2] : 0
-      if (metaNome && metaAlvo !== null) addMeta(metaNome, metaAlvo, metaAtual)
-      break
+      case 'historico':
+        if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
+          addHistorico(nome(values[0]), values[1])
+        }
+        break
+      case 'confirmClearAll':
+        if (String(values[0] ?? '').trim().toUpperCase() === 'EXCLUIR') {
+          clearAll()
+        }
+        break
+      case 'confirmClearDespesas':
+        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
+          despesas.value = []
+          despesasAvulsas.value = []
+        }
+        break
+      case 'confirmClearTransacoes':
+        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
+          transacoes.value = []
+        }
+        break
+      case 'confirmClearHistorico':
+        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
+          historico.value = { labels: [], dados: [] }
+        }
+        break
     }
     case 'historico':
       if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
@@ -158,7 +168,6 @@ const handleConfirm = (values) => {
       clearHistorico()
       break
   }
-  close()
 }
 
 // Ações do modal
@@ -175,7 +184,8 @@ const openAddRenda = () => {
   modalAction.value = 'renda'
   open('Adicionar Renda', [
     { placeholder: 'Nome da origem (ex: Salário)' },
-    { placeholder: 'Valor da Renda', isCurrency: true }
+    { placeholder: 'Valor da Renda', isCurrency: true },
+    { type: 'select', label: 'Destino da receita', options: destinoOptions, value: destinoOptions[0]?.value || 'patrimonio' }
   ])
 }
 
@@ -230,22 +240,30 @@ const openAddHistorico = () => {
 // Ações de confirmação usando modal
 const confirmClearAll = () => {
   modalAction.value = 'confirmClearAll'
-  open('Zerar sistema', [], 'Deseja realmente apagar todos os dados? Esta ação não pode ser desfeita.')
+  open('ATENÇÃO', [
+    { placeholder: 'Digite EXCLUIR para confirmar' }
+  ])
 }
 
 const confirmClearDespesas = () => {
   modalAction.value = 'confirmClearDespesas'
-  open('Apagar despesas', [], 'Deseja realmente apagar todas as despesas?')
+  open('Confirmar', [
+    { placeholder: 'Digite SIM para apagar todas as despesas' }
+  ])
 }
 
 const confirmClearTransacoes = () => {
   modalAction.value = 'confirmClearTransacoes'
-  open('Limpar transações', [], 'Deseja realmente limpar o histórico de transações?')
+  open('Confirmar', [
+    { placeholder: 'Digite SIM para limpar transações' }
+  ])
 }
 
 const confirmClearHistorico = () => {
   modalAction.value = 'confirmClearHistorico'
-  open('Limpar gráfico', [], 'Deseja realmente limpar o histórico de evolução patrimonial?')
+  open('Confirmar', [
+    { placeholder: 'Digite SIM para limpar histórico' }
+  ])
 }
 
 onMounted(load)

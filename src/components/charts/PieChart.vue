@@ -17,6 +17,7 @@ let chartInstance = null
 
 const percentages = computed(() => {
   const total = props.data.reduce((a, b) => a + b, 0)
+  if (total <= 0) return props.data.map(() => 0)
   return props.data.map(v => Math.round((v / total) * 100))
 })
 

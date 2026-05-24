@@ -17,8 +17,18 @@ const inputRefs = ref([])
 const previouslyFocused = ref(null)
 const modalRef = ref(null)
 
+const resolveInitialValue = (field) => {
+  if (field?.value !== undefined && field?.value !== null) return field.value
+  if (field?.type === 'select') {
+    const firstOption = field.options?.[0]
+    if (typeof firstOption === 'object') return firstOption.value ?? ''
+    return firstOption ?? ''
+  }
+  return ''
+}
+
 watch(() => props.fields, (newFields) => {
-  inputValues.value = newFields.map(f => f.value || '')
+  inputValues.value = newFields.map(resolveInitialValue)
 }, { immediate: true })
 
 watch(() => props.isOpen, (open) => {
@@ -81,13 +91,15 @@ const confirm = () => {
     return
   }
   const values = inputValues.value.map((val, i) => {
-    if (props.fields[i].isCurrency) {
-      return parseCurrency(val)
+    const field = props.fields?.[i]
+    if (field?.isCurrency) {
+      if (typeof val === 'number') return val
+      return parseCurrency(String(val ?? ''))
     }
     if (typeof val === 'string') return val.trim()
     return val
   })
-  emit('confirm', values)
+  emit('confirm', { confirmed: true, values })
 }
 
 const cancel = () => {
