@@ -83,8 +83,19 @@ const initChart = () => {
   })
 }
 
+const updateChart = () => {
+  if (!chartInstance) {
+    initChart()
+    return
+  }
+  chartInstance.data.labels = [...props.labels]
+  chartInstance.data.datasets[0].data = [...props.data]
+  chartInstance.update()
+}
+
 onMounted(initChart)
-watch(() => [props.labels, props.data], initChart, { deep: true })
+watch(() => props.labels, updateChart, { deep: true })
+watch(() => props.data, updateChart, { deep: true })
 
 onUnmounted(() => {
   if (chartInstance) {

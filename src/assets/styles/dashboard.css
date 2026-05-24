@@ -272,12 +272,18 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .transaction-title {
   color: var(--text-main);
   font-weight: 500;
   font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .transaction-date {
@@ -288,6 +294,9 @@
 .transaction-value {
   font-weight: 700;
   font-size: 1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .transaction-value.positive {
@@ -302,18 +311,55 @@
 .goal-item {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .goal-header {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--text-soft);
-  margin-bottom: 8px;
+  align-items: center;
 }
 
-.goal-header span:last-child {
+.goal-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-title);
+}
+
+.goal-name i {
+  color: var(--accent-cyan);
+  font-size: 0.85rem;
+}
+
+.goal-values {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.goal-atual {
+  font-weight: 700;
+  color: var(--accent-cyan);
+  font-size: 1rem;
+}
+
+.goal-sep {
+  color: var(--text-soft);
+}
+
+.goal-alvo {
   color: var(--text-main);
+  font-weight: 600;
+}
+
+.goal-pct {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--text-soft);
   font-weight: 600;
 }
 
@@ -324,6 +370,144 @@
 .transactions-panel {
   display: flex;
   flex-direction: column;
+}
+
+/* Toast de erro */
+.error-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(30, 10, 20, 0.92);
+  border: 1px solid rgba(255, 133, 153, 0.4);
+  color: var(--danger-soft);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  max-width: 90%;
+  white-space: nowrap;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+/* Banner de onboarding */
+.onboarding-banner {
+  margin-bottom: 28px;
+  border: 1px solid rgba(120, 200, 231, 0.25);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(78, 130, 192, 0.15), rgba(49, 90, 151, 0.08));
+  padding: 22px 26px;
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.onboarding-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-title);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.onboarding-title i {
+  color: var(--accent-cyan);
+}
+
+.onboarding-dismiss {
+  background: none;
+  border: 1px solid rgba(184, 212, 245, 0.18);
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.onboarding-dismiss:hover {
+  border-color: rgba(255, 133, 153, 0.4);
+  color: var(--danger-soft);
+}
+
+.onboarding-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+}
+
+.onboarding-list li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(10, 22, 52, 0.3);
+  border: 1px solid rgba(130, 185, 230, 0.15);
+  cursor: pointer;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.onboarding-list li:hover:not(.step-done) {
+  background: rgba(120, 200, 231, 0.1);
+  border-color: rgba(120, 200, 231, 0.3);
+  transform: translateX(4px);
+}
+
+.onboarding-list li.step-done {
+  cursor: default;
+  opacity: 0.55;
+  background: rgba(120, 200, 231, 0.06);
+  border-color: rgba(120, 200, 231, 0.2);
+  text-decoration: line-through;
+  text-decoration-color: rgba(120, 200, 231, 0.4);
+}
+
+.step-num {
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--button-a), var(--button-b));
+  color: #081f35;
+  font-weight: 800;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-done .step-num {
+  background: rgba(120, 200, 231, 0.2);
+  color: var(--accent-cyan);
+}
+
+.step-arrow {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  flex-shrink: 0;
 }
 
 /* Sidebar de ações */

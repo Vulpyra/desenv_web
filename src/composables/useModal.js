@@ -4,12 +4,14 @@ export function useModal() {
   const isOpen = ref(false)
   const title = ref('')
   const fields = ref([])
+  const message = ref('')
   const resolvePromise = ref(null)
   const inputValues = ref([])
 
-  const open = (modalTitle, modalFields) => {
+  const open = (modalTitle, modalFields = [], modalMessage = '') => {
     title.value = modalTitle
     fields.value = modalFields
+    message.value = modalMessage
     inputValues.value = modalFields.map(f => f.value || '')
     isOpen.value = true
     
@@ -36,6 +38,7 @@ export function useModal() {
     isOpen.value = false
     title.value = ''
     fields.value = []
+    message.value = ''
     resolvePromise.value = null
   }
 
@@ -43,6 +46,7 @@ export function useModal() {
     isOpen,
     title,
     fields,
+    message,
     inputValues,
     open,
     confirm,

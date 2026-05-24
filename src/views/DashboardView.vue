@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardData } from '@/composables/useDashboardData'
 import { useModal } from '@/composables/useModal'
 import { useCurrency } from '@/composables/useCurrency'
+import { useAuth } from '@/composables/useAuth'
 
 // Componentes
 import StatCards from '@/components/dashboard/StatCards.vue'
@@ -16,20 +17,82 @@ import GoalsPanel from '@/components/goals/GoalsPanel.vue'
 import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
 import Modal from '@/components/Modal.vue'
 
-// Estado
-const { parseCurrency } = useCurrency()
 const router = useRouter()
+const { signOut } = useAuth()
+
+// Estado
+const { parseCurrency, formatCurrency } = useCurrency()
 const {
   patrimonio, rendas, despesas, despesasAvulsas, metas, transacoes, historico,
-  totalRenda, totalDespesa,
+  totalRenda, totalDespesa, error: dashError,
   load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addHistorico,
-  removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll
+  removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll,
+  clearDespesas, clearTransacoes, clearHistorico
 } = useDashboardData()
 
-const { isOpen, title, fields, open, close } = useModal()
+const { isOpen, title, fields, message, open, close } = useModal()
 
 // Visibilidade dos valores
 const valoresOcultos = ref(false)
+
+// Onboarding
+const onboardingDismissed = ref(false)
+
+const onboardingSteps = computed(() => [
+  {
+    label: 'Adicione sua',
+    bold: 'renda mensal',
+    hint: '— clique aqui ou no + em "Renda Mensal"',
+    done: rendas.value.length > 0,
+    action: () => openAddRenda()
+  },
+  {
+    label: 'Cadastre suas',
+    bold: 'despesas fixas',
+    hint: '(aluguel, planos, etc.)',
+    done: despesas.value.length > 0,
+    action: () => openAddDespesaFixa()
+  },
+  {
+    label: 'Defina uma',
+    bold: 'meta financeira',
+    hint: 'para ter algo a perseguir',
+    done: metas.value.length > 0,
+    action: () => openAddMeta()
+  },
+  {
+    label: 'Registre o',
+    bold: 'patrimônio atual',
+    hint: 'para acompanhar sua evolução',
+    done: historico.value.labels.length > 0,
+    action: () => openAddHistorico()
+  }
+])
+
+const allStepsDone = computed(() => onboardingSteps.value.every(s => s.done))
+const showOnboarding = computed(() => !onboardingDismissed.value && !allStepsDone.value)
+
+// Sugestão dinâmica baseada nos dados reais
+const aiSuggestion = computed(() => {
+  const saldoAtual = totalRenda.value - totalDespesa.value
+  if (totalRenda.value === 0) return 'Adicione sua primeira fonte de renda para começar.'
+  const pct = totalDespesa.value / totalRenda.value
+  if (pct > 0.9) return `Suas despesas (${Math.round(pct * 100)}% da renda) estão muito altas. Revise seus gastos fixos.`
+  if (pct > 0.7) return `Despesas em ${Math.round(pct * 100)}% da renda. Tente reduzir para abaixo de 70%.`
+  if (metas.value.length === 0) return `Saldo positivo de ${formatCurrency(saldoAtual)}. Que tal definir uma meta financeira?`
+  return `Saldo de ${formatCurrency(saldoAtual)} disponível. Continue assim!`
+})
+
+// Dados reais para o PieChart
+const pieData = computed(() => {
+  const r = totalRenda.value
+  const d = totalDespesa.value
+  if (r === 0 && d === 0) return [1, 1]
+  const saldo = Math.max(r - d, 0)
+  const despesasEfetivas = Math.min(d, r)
+  return [despesasEfetivas, saldo]
+})
+const pieLabels = computed(() => ['Despesas', 'Saldo'])
 
 const toggleVisibilidade = () => {
   valoresOcultos.value = !valoresOcultos.value
@@ -37,153 +100,129 @@ const toggleVisibilidade = () => {
 
 // Navegação
 const goToSimulado = () => {
-  router.push('/simulado')
+  window.location.href = '/simulado'
+}
+
+const goToProfile = () => {
+  router.push('/perfil')
+}
+
+const handleSignOut = async () => {
+  await signOut()
+  router.push('/auth')
 }
 
 // Handlers de Modal
-const handleConfirm = (result) => {
-  try {
-    if (!result?.confirmed || !result.values) return
+const handleConfirm = (values) => {
+  const nome = (val) => (typeof val === 'string' ? val.trim() : '')
+  const valor = (val) => (typeof val === 'number' && !isNaN(val) && val > 0 ? val : null)
 
-    const values = result.values
-    const nome = (val) => (typeof val === 'string' ? val.trim() : String(val ?? '').trim())
-    const valor = (val) => (typeof val === 'number' && !isNaN(val) && val > 0 ? val : null)
-
-    switch (modalAction.value) {
-      case 'patrimonio':
-        if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
-          patrimonio.value = values[0]
-        }
-        break
-      case 'renda':
-        if (nome(values[0]) && valor(values[1])) {
-          const destinoValue = values[2] || 'patrimonio'
-          if (destinoValue === 'patrimonio') {
-            addRenda(nome(values[0]), valor(values[1]), { type: 'patrimonio' })
-          } else {
-            const metaId = Number(destinoValue)
-            addRenda(nome(values[0]), valor(values[1]), { type: 'meta', metaId })
-          }
-        }
-        break
-      case 'despesaFixa':
-        if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]))
-        break
-      case 'despesaAvulsa':
-        if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]))
-        break
-      case 'meta': {
-        const metaNome = nome(values[0])
-        const metaAlvo = valor(values[1])
-        const metaAtual = typeof values[2] === 'number' && !isNaN(values[2]) && values[2] >= 0 ? values[2] : 0
-        if (metaNome && metaAlvo !== null) addMeta(metaNome, metaAlvo, metaAtual)
-        break
+  switch (modalAction.value) {
+    case 'patrimonio':
+      if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
+        const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
+        addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
       }
-      case 'historico':
-        if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
-          addHistorico(nome(values[0]), values[1])
-        }
-        break
-      case 'confirmClearAll':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'EXCLUIR') {
-          clearAll()
-        }
-        break
-      case 'confirmClearDespesas':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
-          despesas.value = []
-          despesasAvulsas.value = []
-        }
-        break
-      case 'confirmClearTransacoes':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
-          transacoes.value = []
-        }
-        break
-      case 'confirmClearHistorico':
-        if (String(values[0] ?? '').trim().toUpperCase() === 'SIM') {
-          historico.value = { labels: [], dados: [] }
-        }
-        break
+      break
+    case 'renda':
+      if (nome(values[0]) && valor(values[1])) addRenda(nome(values[0]), valor(values[1]))
+      break
+    case 'despesaFixa':
+      if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]))
+      break
+    case 'despesaAvulsa':
+      if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]))
+      break
+    case 'meta': {
+      const metaNome = nome(values[0])
+      const metaAlvo = valor(values[1])
+      const metaAtual = typeof values[2] === 'number' && !isNaN(values[2]) && values[2] >= 0 ? values[2] : 0
+      if (metaNome && metaAlvo !== null) addMeta(metaNome, metaAlvo, metaAtual)
+      break
     }
-  } finally {
-    close()
+    case 'historico':
+      if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
+        addHistorico(nome(values[0]), values[1])
+      }
+      break
+    case 'confirmClearAll':
+      clearAll()
+      break
+    case 'confirmClearDespesas':
+      clearDespesas()
+      break
+    case 'confirmClearTransacoes':
+      clearTransacoes()
+      break
+    case 'confirmClearHistorico':
+      clearHistorico()
+      break
   }
+  close()
 }
 
 // Ações do modal
 const modalAction = ref('')
 
-const monthOptions = [
-  { value: 'Jan', label: 'Jan' },
-  { value: 'Fev', label: 'Fev' },
-  { value: 'Mar', label: 'Mar' },
-  { value: 'Abr', label: 'Abr' },
-  { value: 'Mai', label: 'Mai' },
-  { value: 'Jun', label: 'Jun' },
-  { value: 'Jul', label: 'Jul' },
-  { value: 'Ago', label: 'Ago' },
-  { value: 'Set', label: 'Set' },
-  { value: 'Out', label: 'Out' },
-  { value: 'Nov', label: 'Nov' },
-  { value: 'Dez', label: 'Dez' }
-]
-
-const getCurrentMonth = () => monthOptions[new Date().getMonth()]?.value || 'Jan'
-const getRendaDestinoOptions = () => {
-  const options = [{ value: 'patrimonio', label: 'Patrimonio' }]
-  metas.value.forEach((meta) => {
-    options.push({ value: String(meta.id), label: `Meta: ${meta.nome}` })
-  })
-  return options
-}
-
-const openEditPatrimonio = async () => {
+const openEditPatrimonio = () => {
   modalAction.value = 'patrimonio'
-  await open('Editar Patrimônio', [
+  open('Editar Patrimônio', [
     { placeholder: 'Novo valor do Patrimônio', value: patrimonio.value, isCurrency: true }
   ])
 }
 
-const openAddRenda = async () => {
+const openAddRenda = () => {
   modalAction.value = 'renda'
-  const destinoOptions = getRendaDestinoOptions()
-  await open('Adicionar Renda', [
+  open('Adicionar Renda', [
     { placeholder: 'Nome da origem (ex: Salário)' },
-    { placeholder: 'Valor da Renda', isCurrency: true },
-    { type: 'select', label: 'Destino da receita', options: destinoOptions, value: destinoOptions[0]?.value || 'patrimonio' }
+    { placeholder: 'Valor da Renda', isCurrency: true }
   ])
 }
 
-const openAddDespesaFixa = async () => {
+const openAddDespesaFixa = () => {
   modalAction.value = 'despesaFixa'
-  await open('Nova Despesa Fixa', [
+  open('Nova Despesa Fixa', [
     { placeholder: 'Nome da despesa (ex: Aluguel)' },
     { placeholder: 'Valor da despesa', isCurrency: true }
   ])
 }
 
-const openAddDespesaAvulsa = async () => {
+const openAddDespesaAvulsa = () => {
   modalAction.value = 'despesaAvulsa'
-  await open('Despesa Avulsa', [
+  open('Despesa Avulsa', [
     { placeholder: 'Motivo (ex: Uber, Lanche)' },
     { placeholder: 'Valor da despesa', isCurrency: true }
   ])
 }
 
-const openAddMeta = async () => {
+const openAddMeta = () => {
   modalAction.value = 'meta'
-  await open('Nova Meta', [
+  open('Nova Meta', [
     { placeholder: 'Nome da Meta (ex: Viagem)' },
     { placeholder: 'Valor alvo/total', isCurrency: true },
     { placeholder: 'Valor atual guardado', isCurrency: true }
   ])
 }
 
-const openAddHistorico = async () => {
+const MESES = [
+  { value: 'Jan', label: 'Janeiro' },
+  { value: 'Fev', label: 'Fevereiro' },
+  { value: 'Mar', label: 'Março' },
+  { value: 'Abr', label: 'Abril' },
+  { value: 'Mai', label: 'Maio' },
+  { value: 'Jun', label: 'Junho' },
+  { value: 'Jul', label: 'Julho' },
+  { value: 'Ago', label: 'Agosto' },
+  { value: 'Set', label: 'Setembro' },
+  { value: 'Out', label: 'Outubro' },
+  { value: 'Nov', label: 'Novembro' },
+  { value: 'Dez', label: 'Dezembro' },
+]
+
+const openAddHistorico = () => {
   modalAction.value = 'historico'
-  await open('Adicionar Evolução', [
-    { type: 'select', label: 'Mês', options: monthOptions, value: getCurrentMonth() },
+  open('Adicionar Evolução', [
+    { placeholder: 'Selecione o mês', options: MESES },
     { placeholder: 'Patrimônio no mês', isCurrency: true }
   ])
 }
@@ -231,11 +270,17 @@ onMounted(load)
   <div class="dashboard-shell">
     <span class="particle-stream" aria-hidden="true"></span>
 
+    <div v-if="dashError" class="error-toast" @click="dashError = null">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ dashError }}
+      <i class="fas fa-times" style="margin-left: auto"></i>
+    </div>
+
     <div class="dashboard">
       <!-- Header -->
       <header class="top-bar">
-        <div class="brand-mark" aria-label="Dashboard Financeiro">
-          <span class="brand-text">Dashboard Financeiro</span>
+        <div class="brand-mark" aria-label="Renda Fácil">
+          <span class="brand-text">Renda Fácil</span>
         </div>
         <div class="top-icons">
           <i
@@ -244,9 +289,40 @@ onMounted(load)
             @click="toggleVisibilidade"
             title="Ocultar/Exibir valores"
           ></i>
-          <i class="far fa-user-circle"></i>
+          <i class="far fa-user-circle" @click="goToProfile" title="Meu Perfil" style="cursor: pointer"></i>
+          <i class="fas fa-sign-out-alt" @click="handleSignOut" title="Sair" style="cursor: pointer"></i>
         </div>
       </header>
+
+      <!-- Banner de onboarding -->
+      <div v-if="showOnboarding" class="onboarding-banner">
+        <div class="onboarding-header">
+          <div class="onboarding-title">
+            <i class="fas fa-rocket"></i>
+            Bem-vindo ao Renda Fácil! Siga os passos para começar:
+          </div>
+          <button class="onboarding-dismiss" @click="onboardingDismissed = true" title="Dispensar">
+            Dispensar <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <ol class="onboarding-list">
+          <li
+            v-for="(step, i) in onboardingSteps"
+            :key="i"
+            :class="{ 'step-done': step.done }"
+            @click="!step.done && step.action()"
+          >
+            <span class="step-num">
+              <i v-if="step.done" class="fas fa-check"></i>
+              <span v-else>{{ i + 1 }}</span>
+            </span>
+            <span>
+              {{ step.label }} <strong>{{ step.bold }}</strong> {{ step.hint }}
+            </span>
+            <i v-if="!step.done" class="fas fa-chevron-right step-arrow"></i>
+          </li>
+        </ol>
+      </div>
 
       <!-- Cards de estatísticas -->
       <StatCards
@@ -262,10 +338,7 @@ onMounted(load)
 
       <!-- Conteúdo principal -->
       <section class="main-content">
-        <PieChart
-          :data="[totalRenda, totalDespesa]"
-          :labels="['Renda mensal', 'Despesas mensais']"
-        />
+        <PieChart :data="pieData" :labels="pieLabels" />
         
         <IncomeDetails
           :rendas="rendas"
@@ -284,7 +357,7 @@ onMounted(load)
           @clear-all="confirmClearAll"
         >
           <template #ai-suggestion>
-            <AISuggestion />
+            <AISuggestion :suggestion="aiSuggestion" />
           </template>
         </QuickActions>
       </section>
@@ -320,6 +393,7 @@ onMounted(load)
     :is-open="isOpen"
     :title="title"
     :fields="fields"
+    :message="message"
     @confirm="handleConfirm"
     @cancel="close"
   />

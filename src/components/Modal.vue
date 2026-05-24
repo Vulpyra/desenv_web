@@ -5,7 +5,8 @@ import { useCurrency } from '@/composables/useCurrency'
 const props = defineProps({
   isOpen: Boolean,
   title: String,
-  fields: Array
+  fields: Array,
+  message: String
 })
 
 const emit = defineEmits(['confirm', 'cancel'])
@@ -49,6 +50,11 @@ const handleKeydown = (e) => {
     cancel()
   }
   if (e.key === 'Enter' && !e.shiftKey) {
+    if (props.message) {
+      e.preventDefault()
+      confirm()
+      return
+    }
     const inputs = document.querySelectorAll('.modal-input')
     const lastInput = inputs[inputs.length - 1]
     if (document.activeElement === lastInput || inputs.length === 1) {
@@ -80,15 +86,20 @@ const handleInput = (event, index) => {
 }
 
 const confirm = () => {
+  if (props.message) {
+    emit('confirm', [])
+    return
+  }
   const values = inputValues.value.map((val, i) => {
     const field = props.fields?.[i]
     if (field?.isCurrency) {
       if (typeof val === 'number') return val
       return parseCurrency(String(val ?? ''))
     }
-    return String(val ?? '').trim()
+    if (typeof val === 'string') return val.trim()
+    return val
   })
-  emit('confirm', { confirmed: true, values })
+  emit('confirm', values)
 }
 
 const cancel = () => {
@@ -106,33 +117,28 @@ const cancel = () => {
         </button>
       </div>
       <div class="modal-body">
-        <template v-for="(field, index) in fields" :key="index">
-          <div class="modal-field">
-            <span v-if="field.label" class="modal-field-label">{{ field.label }}</span>
-            <select
-              v-if="field.type === 'select'"
-              :ref="(el) => setItemRef(el, index)"
-              v-model="inputValues[index]"
-              class="modal-input modal-select"
-            >
-              <option
-                v-for="(option, optionIndex) in field.options || []"
-                :key="optionIndex"
-                :value="typeof option === 'object' ? option.value : option"
-              >
-                {{ typeof option === 'object' ? option.label : option }}
-              </option>
-            </select>
-            <input
-              v-else
-              :ref="(el) => setItemRef(el, index)"
-              v-model="inputValues[index]"
-              type="text"
-              :placeholder="field.placeholder"
-              class="modal-input"
-              @input="handleInput($event, index)"
-            />
-          </div>
+        <p v-if="message" class="modal-message">{{ message }}</p>
+        <template v-else v-for="(field, index) in fields" :key="index">
+          <select
+            v-if="field.options"
+            :ref="(el) => setItemRef(el, index)"
+            v-model="inputValues[index]"
+            class="modal-input modal-select"
+          >
+            <option value="" disabled>{{ field.placeholder }}</option>
+            <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <input
+            v-else
+            :ref="(el) => setItemRef(el, index)"
+            v-model="inputValues[index]"
+            type="text"
+            :placeholder="field.placeholder"
+            class="modal-input"
+            @input="handleInput($event, index)"
+          />
         </template>
       </div>
       <div class="modal-actions">
