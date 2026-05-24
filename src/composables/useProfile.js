@@ -28,13 +28,22 @@ export function useProfile() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: profileData } = await supabase
-        .from('profiles').select('*').eq('id', user.id).single()
+      const [{ data: profileData }, { data: prefsData }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('preferencias').select('*').eq('usuario_id', user.id).single()
+      ])
 
-      if (profileData) {
-        profile.value = { ...profileData, email: user.email }
-      } else {
-        profile.value = { ...DEFAULT_PROFILE, email: user.email, criado_em: user.created_at }
+      profile.value = profileData
+        ? { ...profileData, email: user.email }
+        : { ...DEFAULT_PROFILE, email: user.email, criado_em: user.created_at }
+
+      if (prefsData) {
+        preferences.value = {
+          moeda: prefsData.moeda ?? DEFAULT_PREFERENCES.moeda,
+          tema: prefsData.tema ?? DEFAULT_PREFERENCES.tema,
+          notificacoes: prefsData.notificacoes ?? DEFAULT_PREFERENCES.notificacoes,
+          ocultar_valores: prefsData.ocultar_valores ?? DEFAULT_PREFERENCES.ocultar_valores,
+        }
       }
     } catch (err) {
       error.value = err.message
@@ -71,9 +80,31 @@ export function useProfile() {
     return { success: true }
   }
 
+  const savePreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return { success: false }
+
+      const { moeda, tema, notificacoes, ocultar_valores } = preferences.value
+      const { error: err } = await supabase
+        .from('preferencias')
+        .upsert({ usuario_id: user.id, moeda, tema, notificacoes, ocultar_valores })
+
+      if (err) throw err
+      return { success: true }
+    } catch (err) {
+      error.value = err.message
+      return { success: false, error: err.message }
+    }
+  }
+
   const saveAll = async () => {
-    const res = await updateProfile(profile.value)
-    if (!res.success) return { success: false, error: error.value }
+    const [profileRes, prefsRes] = await Promise.all([
+      updateProfile(profile.value),
+      savePreferences()
+    ])
+    if (!profileRes.success) return { success: false, error: error.value }
+    if (!prefsRes.success) return { success: false, error: error.value }
     return { success: true }
   }
 
