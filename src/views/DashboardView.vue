@@ -100,7 +100,7 @@ const toggleVisibilidade = () => {
 
 // Navegação
 const goToSimulado = () => {
-  window.location.href = '/simulado'
+  router.push('/simulado')
 }
 
 const goToProfile = () => {

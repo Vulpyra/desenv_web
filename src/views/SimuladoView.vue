@@ -1,8 +1,11 @@
 <script setup>
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
+const { getSession } = useAuth()
 
 const form = reactive({
   nome: '',
@@ -16,9 +19,7 @@ const form = reactive({
   observacoes: '',
 })
 
-const goBack = () => {
-  router.push('/')
-}
+const goBack = () => router.push('/')
 
 const resetForm = () => {
   Object.keys(form).forEach((key) => {
@@ -26,9 +27,82 @@ const resetForm = () => {
   })
 }
 
-const submitForm = () => {
-  // Placeholder while no backend exists: keeps UX flow without full-page reload.
-  window.alert('Simulacao gerada com sucesso.')
+const submitForm = async () => {
+  const session = await getSession()
+  
+  if (!session) {
+    alert('Sessão expirada. Faça login novamente.')
+    router.push('/auth')
+    return
+  }
+
+  const uid = session.user.id
+  const operacoes = []
+
+  if (form.nome) {
+    operacoes.push(
+      supabase
+        .from('profiles')
+        .update({ nome: form.nome })
+        .eq('id', uid)
+    )
+  }
+
+  if (form.salario) {
+    operacoes.push(
+      supabase
+        .from('rendas')
+        .insert({
+          usuario_id: uid,
+          nome: 'Salário',
+          valor: Number(form.salario),
+        })
+    )
+  }
+
+  const despesasParaInserir = [
+    { nome: 'Saúde', campo: form.saude },
+    { nome: 'Educação', campo: form.educacao },
+    { nome: 'PGBL', campo: form.pgbl },
+  ].filter(d => d.campo)
+
+  if (despesasParaInserir.length > 0) {
+    operacoes.push(
+      supabase
+        .from('despesas')
+        .insert(
+          despesasParaInserir.map(d => ({
+            usuario_id: uid,
+            nome: d.nome,
+            valor: Number(d.campo),
+            is_fixa: true,
+          }))
+        )
+    )
+  }
+
+  operacoes.push(
+    supabase
+      .from('simulados')
+      .insert({
+        usuario_id: uid,
+        cpf: form.cpf || null,
+        idade: form.idade ? Number(form.idade) : null,
+        dependentes: form.dependentes ? Number(form.dependentes) : null,
+        observacoes: form.observacoes || null,
+      })
+  )
+
+  const resultados = await Promise.all(operacoes)
+  const erros = resultados.filter(r => r.error).map(r => r.error.message)
+
+  if (erros.length > 0) {
+    alert('Erros ao salvar:\n' + erros.join('\n'))
+  } else {
+    alert('Simulação salva com sucesso!')
+    resetForm()
+    router.push('/')
+  }
 }
 </script>
 
