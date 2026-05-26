@@ -100,3 +100,10 @@
   line-height: 1.6;
   font-size: 0.95rem;
 }
+
+.field-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #ff6b6b;
+}
