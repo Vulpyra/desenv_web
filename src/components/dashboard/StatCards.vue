@@ -7,7 +7,11 @@ const props = defineProps({
   patrimonio: Number,
   totalRenda: Number,
   totalDespesa: Number,
-  isHidden: Boolean
+  isHidden: Boolean,
+  showEdit: {
+    type: Boolean,
+    default: true
+  }
 })
 
 const emit = defineEmits([
@@ -33,7 +37,7 @@ const declaredProgress = computed(() => {
       label-hint="Conjunto de bens, direitos e valores acumulados ao longo do tempo."
       :value="formatCurrency(patrimonio)"
       :is-hidden="isHidden"
-      show-edit
+      :show-edit="showEdit"
       @edit="$emit('editPatrimonio')"
     />
     <StatCard

@@ -131,6 +131,13 @@ const cancel = () => {
             </option>
           </select>
           <input
+            v-else-if="field.type === 'date'"
+            :ref="(el) => setItemRef(el, index)"
+            v-model="inputValues[index]"
+            type="date"
+            class="modal-input"
+          />
+          <input
             v-else
             :ref="(el) => setItemRef(el, index)"
             v-model="inputValues[index]"

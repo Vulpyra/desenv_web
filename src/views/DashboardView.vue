@@ -22,14 +22,19 @@ const router = useRouter()
 const { signOut } = useAuth()
 
 // Estado
-const { parseCurrency, formatCurrency } = useCurrency()
+const { formatCurrency } = useCurrency()
 const {
-  patrimonio, rendas, despesas, despesasAvulsas, metas, transacoes, historico,
-  totalRenda, totalDespesa, error: dashError,
-  load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addHistorico,
+  rendas, despesas, despesasAvulsas, metas, transacoes,
+  saldo, historicoCalculado,
+  rendasCiclo, despesasFixasCiclo, totalRendaCiclo, totalDespesaCiclo,
+  error: dashError,
+  load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addDespesaMeta,
   removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll,
-  clearDespesas, clearTransacoes, clearHistorico
+  clearDespesas, clearTransacoes
 } = useDashboardData()
+
+const todayISO = () => new Date().toISOString().split('T')[0]
+const goalsPanelRef = ref(null)
 
 const { isOpen, title, fields, message, open, close } = useModal()
 
@@ -57,31 +62,31 @@ const onboardingSteps = computed(() => [
   {
     label: 'Defina uma',
     bold: 'meta financeira',
-    hint: 'para ter algo a perseguir',
+    hint: '— clique em + em "Metas Financeiras"',
     done: metas.value.length > 0,
-    action: () => openAddMeta()
+    action: () => goalsPanelRef.value?.openModal()
   },
   {
-    label: 'Registre o',
-    bold: 'patrimônio atual',
-    hint: 'para acompanhar sua evolução',
-    done: historico.value.labels.length > 0,
-    action: () => openAddHistorico()
+    label: 'Defina uma',
+    bold: 'meta de evolução',
+    hint: '— adicione rendas e despesas com datas para ver o gráfico',
+    done: rendas.value.some(r => r.data) || [...despesas.value, ...despesasAvulsas.value].some(d => d.data),
+    action: () => openAddRenda()
   }
 ])
 
 const allStepsDone = computed(() => onboardingSteps.value.every(s => s.done))
 const showOnboarding = computed(() => !onboardingDismissed.value && !allStepsDone.value)
 
-// Sugestão dinâmica baseada nos dados reais
+// Sugestão dinâmica baseada nos dados do ciclo atual
 const aiSuggestion = computed(() => {
-  const saldoAtual = totalRenda.value - totalDespesa.value
-  if (totalRenda.value === 0) return 'Adicione sua primeira fonte de renda para começar.'
-  const pct = totalDespesa.value / totalRenda.value
+  const saldoCiclo = totalRendaCiclo.value - totalDespesaCiclo.value
+  if (totalRendaCiclo.value === 0) return 'Adicione sua renda do ciclo atual para começar.'
+  const pct = totalDespesaCiclo.value / totalRendaCiclo.value
   if (pct > 0.9) return `Suas despesas (${Math.round(pct * 100)}% da renda) estão muito altas. Revise seus gastos fixos.`
   if (pct > 0.7) return `Despesas em ${Math.round(pct * 100)}% da renda. Tente reduzir para abaixo de 70%.`
-  if (metas.value.length === 0) return `Saldo positivo de ${formatCurrency(saldoAtual)}. Que tal definir uma meta financeira?`
-  return `Saldo de ${formatCurrency(saldoAtual)} disponível. Continue assim!`
+  if (metas.value.length === 0) return `Saldo de ${formatCurrency(saldoCiclo)} no ciclo. Que tal definir uma meta financeira?`
+  return `Saldo de ${formatCurrency(saldoCiclo)} no ciclo atual. Continue assim!`
 })
 
 const glossaryTerms = [
@@ -99,14 +104,15 @@ const glossaryTerms = [
   }
 ]
 
-// Dados reais para o PieChart
+// PieChart usa dados do ciclo atual
 const pieData = computed(() => {
-  const r = totalRenda.value
-  const d = totalDespesa.value
+  const r = totalRendaCiclo.value
+  const d = totalDespesaCiclo.value
   if (r === 0 && d === 0) return [1, 1]
-  const saldo = Math.max(r - d, 0)
+  const saldoCiclo = Math.max(r - d, 0)
   const despesasEfetivas = Math.min(d, r)
-  return [despesasEfetivas, saldo]
+
+  return [despesasEfetivas, saldoCiclo]
 })
 const pieLabels = computed(() => ['Despesas', 'Saldo'])
 
@@ -134,32 +140,20 @@ const handleConfirm = (values) => {
   const valor = (val) => (typeof val === 'number' && !isNaN(val) && val > 0 ? val : null)
 
   switch (modalAction.value) {
-    case 'patrimonio':
-      if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
-        const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
-        addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
-      }
-      break
+    // case 'patrimonio':
+    //   if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
+    //     const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
+    //     addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
+    //   }
+    //   break
     case 'renda':
-      if (nome(values[0]) && valor(values[1])) addRenda(nome(values[0]), valor(values[1]))
+      if (nome(values[0]) && valor(values[1])) addRenda(nome(values[0]), valor(values[1]), values[2] || todayISO())
       break
     case 'despesaFixa':
-      if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]))
+      if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]), values[2] || todayISO())
       break
     case 'despesaAvulsa':
-      if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]))
-      break
-    case 'meta': {
-      const metaNome = nome(values[0])
-      const metaAlvo = valor(values[1])
-      const metaAtual = typeof values[2] === 'number' && !isNaN(values[2]) && values[2] >= 0 ? values[2] : 0
-      if (metaNome && metaAlvo !== null) addMeta(metaNome, metaAlvo, metaAtual)
-      break
-    }
-    case 'historico':
-      if (nome(values[0]) && typeof values[1] === 'number' && !isNaN(values[1])) {
-        addHistorico(nome(values[0]), values[1])
-      }
+      if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]), values[2] || todayISO())
       break
     case 'confirmClearAll':
       clearAll()
@@ -170,9 +164,6 @@ const handleConfirm = (values) => {
     case 'confirmClearTransacoes':
       clearTransacoes()
       break
-    case 'confirmClearHistorico':
-      clearHistorico()
-      break
   }
   close()
 }
@@ -180,18 +171,19 @@ const handleConfirm = (values) => {
 // Ações do modal
 const modalAction = ref('')
 
-const openEditPatrimonio = () => {
-  modalAction.value = 'patrimonio'
-  open('Editar Patrimônio', [
-    { placeholder: 'Novo valor do Patrimônio', value: patrimonio.value, isCurrency: true }
-  ])
-}
+// const openEditPatrimonio = () => {
+//   modalAction.value = 'patrimonio'
+//   open('Editar Patrimônio', [
+//     { placeholder: 'Novo valor do Patrimônio', value: patrimonio.value, isCurrency: true }
+//   ])
+// }
 
 const openAddRenda = () => {
   modalAction.value = 'renda'
   open('Adicionar Renda', [
     { placeholder: 'Nome da origem (ex: Salário)' },
-    { placeholder: 'Valor da Renda', isCurrency: true }
+    { placeholder: 'Valor da Renda', isCurrency: true },
+    { placeholder: 'Data do recebimento', type: 'date', value: todayISO() }
   ])
 }
 
@@ -199,7 +191,8 @@ const openAddDespesaFixa = () => {
   modalAction.value = 'despesaFixa'
   open('Nova Despesa Fixa', [
     { placeholder: 'Nome da despesa (ex: Aluguel)' },
-    { placeholder: 'Valor da despesa', isCurrency: true }
+    { placeholder: 'Valor da despesa', isCurrency: true },
+    { placeholder: 'Data da despesa', type: 'date', value: todayISO() }
   ])
 }
 
@@ -207,39 +200,8 @@ const openAddDespesaAvulsa = () => {
   modalAction.value = 'despesaAvulsa'
   open('Despesa Avulsa', [
     { placeholder: 'Motivo (ex: Uber, Lanche)' },
-    { placeholder: 'Valor da despesa', isCurrency: true }
-  ])
-}
-
-const openAddMeta = () => {
-  modalAction.value = 'meta'
-  open('Nova Meta', [
-    { placeholder: 'Nome da Meta (ex: Viagem)' },
-    { placeholder: 'Valor alvo/total', isCurrency: true },
-    { placeholder: 'Valor atual guardado', isCurrency: true }
-  ])
-}
-
-const MESES = [
-  { value: 'Jan', label: 'Janeiro' },
-  { value: 'Fev', label: 'Fevereiro' },
-  { value: 'Mar', label: 'Março' },
-  { value: 'Abr', label: 'Abril' },
-  { value: 'Mai', label: 'Maio' },
-  { value: 'Jun', label: 'Junho' },
-  { value: 'Jul', label: 'Julho' },
-  { value: 'Ago', label: 'Agosto' },
-  { value: 'Set', label: 'Setembro' },
-  { value: 'Out', label: 'Outubro' },
-  { value: 'Nov', label: 'Novembro' },
-  { value: 'Dez', label: 'Dezembro' },
-]
-
-const openAddHistorico = () => {
-  modalAction.value = 'historico'
-  open('Adicionar Evolução', [
-    { placeholder: 'Selecione o mês', options: MESES },
-    { placeholder: 'Patrimônio no mês', isCurrency: true }
+    { placeholder: 'Valor da despesa', isCurrency: true },
+    { placeholder: 'Data da despesa', type: 'date', value: todayISO() }
   ])
 }
 
@@ -262,13 +224,6 @@ const confirmClearTransacoes = () => {
   modalAction.value = 'confirmClearTransacoes'
   open('Confirmar', [
     { placeholder: 'Digite SIM para limpar transações' }
-  ])
-}
-
-const confirmClearHistorico = () => {
-  modalAction.value = 'confirmClearHistorico'
-  open('Confirmar', [
-    { placeholder: 'Digite SIM para limpar histórico' }
   ])
 }
 
@@ -360,11 +315,11 @@ onMounted(load)
 
       <!-- Cards de estatísticas -->
       <StatCards
-        :patrimonio="patrimonio"
-        :total-renda="totalRenda"
-        :total-despesa="totalDespesa"
+        :patrimonio="saldo"
+        :total-renda="totalRendaCiclo"
+        :total-despesa="totalDespesaCiclo"
         :is-hidden="valoresOcultos"
-        @edit-patrimonio="openEditPatrimonio"
+        :show-edit="false"
         @add-renda="openAddRenda"
         @add-despesa="openAddDespesaAvulsa"
         @clear-despesas="confirmClearDespesas"
@@ -372,11 +327,11 @@ onMounted(load)
 
       <!-- Conteúdo principal -->
       <section class="main-content">
-        <PieChart :data="pieData" :labels="pieLabels" />
+        <PieChart :data="pieData" :labels="pieLabels" :center-value="totalRendaCiclo" />
         
         <IncomeDetails
-          :rendas="rendas"
-          :despesas="despesas"
+          :rendas="rendasCiclo"
+          :despesas="despesasFixasCiclo"
           :is-hidden="valoresOcultos"
           @add-renda="openAddRenda"
           @add-despesa="openAddDespesaFixa"
@@ -399,16 +354,16 @@ onMounted(load)
       <!-- Conteúdo inferior -->
       <section class="bottom-content">
         <EvolutionChart
-          :labels="historico.labels"
-          :data="historico.dados"
-          @add-mes="openAddHistorico"
-          @clear="confirmClearHistorico"
+          :labels="historicoCalculado.labels"
+          :data="historicoCalculado.dados"
         />
 
         <GoalsPanel
+          ref="goalsPanelRef"
           :metas="metas"
           :is-hidden="valoresOcultos"
-          @add="openAddMeta"
+          @add-goal="(g) => addMeta(g.nome, g.alvo)"
+          @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, todayISO())"
           @remove="removeMeta"
         />
 

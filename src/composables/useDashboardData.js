@@ -2,6 +2,8 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useCurrency } from './useCurrency'
 
+const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
 export function useDashboardData() {
   const { formatCurrency } = useCurrency()
   const monthOrder = {
@@ -75,6 +77,105 @@ export function useDashboardData() {
 
   const saldo = computed(() => totalRenda.value - totalDespesa.value)
 
+  const historicoCalculado = computed(() => {
+    const monthlyFlow = {}
+
+    for (const r of rendas.value) {
+      if (!r.data) continue
+      const key = String(r.data).substring(0, 7)
+      monthlyFlow[key] = (monthlyFlow[key] || 0) + Number(r.valor)
+    }
+
+    for (const d of [...despesas.value, ...despesasAvulsas.value]) {
+      if (!d.data) continue
+      const key = String(d.data).substring(0, 7)
+      monthlyFlow[key] = (monthlyFlow[key] || 0) - Number(d.valor)
+    }
+
+    const months = Object.keys(monthlyFlow).sort()
+    let cumulative = 0
+    const labels = []
+    const dados = []
+
+    for (const month of months) {
+      cumulative += monthlyFlow[month]
+      const [year, monthNum] = month.split('-')
+      labels.push(`${MONTH_NAMES[parseInt(monthNum, 10) - 1]}/${year.slice(2)}`)
+      dados.push(cumulative)
+    }
+
+    return { labels, dados }
+  })
+
+  // Helpers de ciclo mensal (5º dia útil do mês atual → 5º dia útil do próximo)
+  const getNthWorkday = (year, month, n) => {
+    let count = 0, day = 1
+    while (true) {
+      const date = new Date(year, month, day)
+      const dow = date.getDay()
+      if (dow !== 0 && dow !== 6) {
+        if (++count === n) return date
+      }
+      day++
+    }
+  }
+
+  const parseEntryDate = (dateStr) => {
+    const [y, m, d] = String(dateStr).split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+
+  const currentCycle = computed(() => {
+    const now = new Date()
+    const y = now.getFullYear()
+    const m = now.getMonth()
+    const startThisMonth = getNthWorkday(y, m, 5)
+    if (now >= startThisMonth) {
+      const nm = m === 11 ? 0 : m + 1
+      const ny = m === 11 ? y + 1 : y
+      return { start: startThisMonth, end: getNthWorkday(ny, nm, 5) }
+    }
+    const pm = m === 0 ? 11 : m - 1
+    const py = m === 0 ? y - 1 : y
+    return { start: getNthWorkday(py, pm, 5), end: startThisMonth }
+  })
+
+  const rendasCiclo = computed(() => {
+    const { start, end } = currentCycle.value
+    return rendas.value.filter(r => {
+      if (!r.data) return false
+      const d = parseEntryDate(r.data)
+      return d >= start && d < end
+    })
+  })
+
+  const despesasFixasCiclo = computed(() => {
+    const { start, end } = currentCycle.value
+    return despesas.value.filter(d => {
+      if (!d.data) return false
+      const date = parseEntryDate(d.data)
+      return date >= start && date < end
+    })
+  })
+
+  const despesasAvulsasCiclo = computed(() => {
+    const { start, end } = currentCycle.value
+    return despesasAvulsas.value.filter(d => {
+      if (!d.data) return false
+      const date = parseEntryDate(d.data)
+      return date >= start && date < end
+    })
+  })
+
+  const totalRendaCiclo = computed(() =>
+    rendasCiclo.value.reduce((sum, r) => sum + Number(r.valor), 0)
+  )
+
+  const totalDespesaCiclo = computed(() =>
+    despesasFixasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0) +
+    despesasAvulsasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0)
+  )
+
   // Carregar todos os dados do usuário autenticado
   const load = async () => {
     isLoading.value = true
@@ -124,13 +225,13 @@ export function useDashboardData() {
   }
 
   // Ações
-  const addRenda = async (nome, valor) => {
+  const addRenda = async (nome, valor, data_lancamento) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     const { data, error: err } = await supabase
       .from('rendas')
-      .insert({ usuario_id: user.id, nome, valor, icone: 'fa-money-bill-wave', cor: 'var(--accent-cyan)' })
+      .insert({ usuario_id: user.id, nome, valor, data: data_lancamento, icone: 'fa-money-bill-wave', cor: 'var(--accent-cyan)' })
       .select()
       .single()
 
@@ -139,13 +240,13 @@ export function useDashboardData() {
     await _addTransacao('renda', nome, valor, data.id, user.id)
   }
 
-  const addDespesaFixa = async (nome, valor) => {
+  const addDespesaFixa = async (nome, valor, data_lancamento) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     const { data, error: err } = await supabase
       .from('despesas')
-      .insert({ usuario_id: user.id, nome, valor, is_fixa: true })
+      .insert({ usuario_id: user.id, nome, valor, data: data_lancamento, is_fixa: true })
       .select()
       .single()
 
@@ -154,13 +255,13 @@ export function useDashboardData() {
     await _addTransacao('despesa', nome, valor, data.id, user.id)
   }
 
-  const addDespesaAvulsa = async (nome, valor) => {
+  const addDespesaAvulsa = async (nome, valor, data_lancamento) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     const { data, error: err } = await supabase
       .from('despesas')
-      .insert({ usuario_id: user.id, nome, valor, is_fixa: false })
+      .insert({ usuario_id: user.id, nome, valor, data: data_lancamento, is_fixa: false })
       .select()
       .single()
 
@@ -187,7 +288,7 @@ export function useDashboardData() {
     if (transacoes.value.length > 50) transacoes.value.pop()
   }
 
-  const addMeta = async (nome, alvo, atual) => {
+  const addMeta = async (nome, alvo) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -197,7 +298,7 @@ export function useDashboardData() {
         usuario_id: user.id,
         nome,
         valor_alvo: alvo,
-        valor_atual: atual,
+        valor_atual: 0,
         icone: 'fa-bullseye',
         cor1: 'var(--accent-sky)',
         cor2: 'var(--button-b)'
@@ -206,7 +307,31 @@ export function useDashboardData() {
       .single()
 
     if (err) { error.value = err.message; return }
-    metas.value.push({ ...data, alvo: data.valor_alvo, atual: data.valor_atual })
+    metas.value.push({ ...data, alvo: data.valor_alvo, atual: 0 })
+  }
+
+  const addDespesaMeta = async (metaId, metaNome, valor, data_lancamento) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const nome = `Meta: ${metaNome}`
+    const { data, error: err } = await supabase
+      .from('despesas')
+      .insert({ usuario_id: user.id, nome, valor, data: data_lancamento, is_fixa: true, meta_id: metaId })
+      .select()
+      .single()
+
+    if (err) { error.value = err.message; return }
+
+    const meta = metas.value.find(m => m.id === metaId)
+    if (meta) {
+      const novoAtual = (meta.atual || 0) + valor
+      await supabase.from('metas').update({ valor_atual: novoAtual }).eq('id', metaId)
+      meta.atual = novoAtual
+    }
+
+    despesas.value.push(data)
+    await _addTransacao('despesa', nome, valor, data.id, user.id)
   }
 
   const addHistorico = async (mes, valor) => {
@@ -248,8 +373,20 @@ export function useDashboardData() {
   }
 
   const removeDespesa = async (id) => {
+    const despesa = [...despesas.value, ...despesasAvulsas.value].find(d => d.id === id)
+
     const { error: err } = await supabase.from('despesas').delete().eq('id', id)
     if (err) { error.value = err.message; return }
+
+    if (despesa?.meta_id) {
+      const meta = metas.value.find(m => m.id === despesa.meta_id)
+      if (meta) {
+        const novoAtual = Math.max(0, (meta.atual || 0) - Number(despesa.valor))
+        await supabase.from('metas').update({ valor_atual: novoAtual }).eq('id', despesa.meta_id)
+        meta.atual = novoAtual
+      }
+    }
+
     despesas.value = despesas.value.filter(d => d.id !== id)
     despesasAvulsas.value = despesasAvulsas.value.filter(d => d.id !== id)
     await supabase.from('transacoes').delete().eq('ref_id', id).eq('tipo', 'despesa')
@@ -274,6 +411,10 @@ export function useDashboardData() {
     await supabase.from('despesas').delete().eq('usuario_id', user.id)
     despesas.value = []
     despesasAvulsas.value = []
+    if (metas.value.some(m => m.atual > 0)) {
+      await supabase.from('metas').update({ valor_atual: 0 }).eq('usuario_id', user.id)
+      metas.value.forEach(m => { m.atual = 0 })
+    }
   }
 
   const clearTransacoes = async () => {
@@ -328,12 +469,18 @@ export function useDashboardData() {
     totalRenda,
     totalDespesa,
     saldo,
+    historicoCalculado,
+    rendasCiclo,
+    despesasFixasCiclo,
+    totalRendaCiclo,
+    totalDespesaCiclo,
     // Métodos
     load,
     addRenda,
     addDespesaFixa,
     addDespesaAvulsa,
     addMeta,
+    addDespesaMeta,
     addHistorico,
     removeRenda,
     removeDespesa,

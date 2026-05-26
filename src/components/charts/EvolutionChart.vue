@@ -8,7 +8,7 @@ const props = defineProps({
   data: Array
 })
 
-const emit = defineEmits(['addMes', 'clear'])
+const emit = defineEmits([])
 
 const { formatCurrency } = useCurrency()
 const canvasRef = ref(null)
@@ -113,19 +113,6 @@ onUnmounted(() => {
         term="Evolução Patrimonial"
         explanation="Acompanhe como seu patrimônio muda ao longo dos meses."
       />
-      <div style="display: flex; gap: 8px">
-        <button class="btn-add" @click="$emit('addMes')" title="Adicionar Mês">
-          <i class="fas fa-plus"></i>
-        </button>
-        <button
-          class="btn-add"
-          @click="$emit('clear')"
-          title="Limpar Gráfico"
-          style="color: var(--danger-soft); border-color: rgba(255, 133, 153, 0.3); background: rgba(255, 133, 153, 0.1)"
-        >
-          <i class="fas fa-trash-alt"></i>
-        </button>
-      </div>
     </div>
     <div class="chart-container" style="position: relative; height: 250px; width: 100%">
       <canvas ref="canvasRef"></canvas>
