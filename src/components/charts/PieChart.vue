@@ -70,12 +70,12 @@ watch(() => props.data, updateChart, { deep: true })
       <canvas ref="canvasRef"></canvas>
     </div>
     <div class="chart-labels">
-      <div class="label-item left">
-        <p>{{ labels[0] }}</p>
-        <span style="color: var(--danger-soft)">{{ percentages[0] }}%</span>
-      </div>
       <div class="label-item right">
         <p>{{ labels[1] }}</p>
+        <span style="color: var(--danger-soft)">{{ percentages[0] }}%</span>
+      </div>
+      <div class="label-item left">
+        <p>{{ labels[0] }}</p>
         <span style="color: var(--accent-cyan)">{{ percentages[1] }}%</span>
       </div>
     </div>

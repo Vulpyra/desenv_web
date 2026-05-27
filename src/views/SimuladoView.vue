@@ -3,9 +3,13 @@ import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
+import { useCurrency } from '@/composables/useCurrency'
 
 const router = useRouter()
 const { getSession } = useAuth()
+const { parseCurrency, maskCurrency } = useCurrency()
+
+const LIMITE_MOEDA = 99999999
 
 const form = reactive({
   nome: '',
@@ -21,6 +25,10 @@ const form = reactive({
 
 const erros = reactive({
   cpf: '',
+  salario: '',
+  saude: '',
+  educacao: '',
+  pgbl: '',
 })
 
 const formatarCPF = (valor) => {
@@ -46,14 +54,12 @@ const validarCPF = (cpf) => {
   const digits = cpf.replace(/\D/g, '')
   if (digits.length !== 11) return false
   if (/^(\d)\1{10}$/.test(digits)) return false
-
   const calc = (mod) => {
     let sum = 0
     for (let i = 0; i < mod - 1; i++) sum += parseInt(digits[i]) * (mod - i)
     const rest = (sum * 10) % 11
     return rest === 10 || rest === 11 ? 0 : rest
   }
-
   return calc(10) === parseInt(digits[9]) && calc(11) === parseInt(digits[10])
 }
 
@@ -69,11 +75,30 @@ const onCPFBlur = () => {
   }
 }
 
+
+const onCurrencyInput = (field, event) => {
+  const digits = event.target.value.replace(/\D/g, '')
+  const num = parseInt(digits || '0', 10) / 100
+
+  if (num > LIMITE_MOEDA) {
+    erros[field] = `O valor deve ser menor ou igual a R$ ${LIMITE_MOEDA.toLocaleString('pt-BR')},00.`
+    event.target.value = form[field] // reverte para o valor anterior
+    return
+  }
+
+  erros[field] = ''
+  maskCurrency(event)
+  form[field] = event.target.value
+}
+
+
 const goBack = () => router.push('/')
+const goToProfile = () => router.push('/perfil')
+
 
 const resetForm = () => {
   Object.keys(form).forEach((key) => (form[key] = ''))
-  erros.cpf = ''
+  Object.keys(erros).forEach((key) => (erros[key] = ''))
 }
 
 const submitForm = async () => {
@@ -81,6 +106,8 @@ const submitForm = async () => {
     erros.cpf = 'CPF inválido.'
     return
   }
+
+  if (Object.values(erros).some(e => e)) return
 
   const session = await getSession()
 
@@ -104,7 +131,7 @@ const submitForm = async () => {
       supabase.from('rendas').insert({
         usuario_id: uid,
         nome: 'Salário',
-        valor: Number(form.salario),
+        valor: parseCurrency(form.salario),
       })
     )
   }
@@ -121,7 +148,7 @@ const submitForm = async () => {
         despesasParaInserir.map(d => ({
           usuario_id: uid,
           nome: d.nome,
-          valor: Number(d.campo),
+          valor: parseCurrency(d.campo),
           is_fixa: true,
         }))
       )
@@ -174,7 +201,7 @@ const submitForm = async () => {
           <h1>Dados do contribuinte</h1>
         </div>
         <div class="top-icons">
-          <i class="far fa-user-circle"></i>
+          <i class="far fa-user-circle" @click="goToProfile" title="Meu Perfil" style="cursor: pointer"></i>
         </div>
       </header>
 
@@ -188,7 +215,7 @@ const submitForm = async () => {
           <div class="field-grid two-cols">
             <label class="field full-span">
               <span>Nome completo</span>
-              <input v-model="form.nome" type="text" name="nome" placeholder="Digite o nome completo">
+              <input v-model="form.nome" type="text" name="nome" placeholder="Digite o nome completo" maxlength="50">
             </label>
 
             <label class="field">
@@ -209,19 +236,27 @@ const submitForm = async () => {
 
             <label class="field">
               <span>Idade</span>
-              <input v-model="form.idade" type="number" name="idade" min="0" max="120" step="1" placeholder="Ex.: 32">
+              <input
+                v-model="form.idade"
+                type="number"
+                name="idade"
+                min="0"
+                max="120"
+                step="1"
+                placeholder="Ex.: 32"
+              >
             </label>
 
             <label class="field">
               <span>Salário mensal</span>
               <input
-                v-model="form.salario"
-                type="number"
+                type="text"
                 name="salario"
-                min="0"
-                max="999999999"
-                placeholder="Ex.: 8500,00"
+                inputmode="numeric"
+                placeholder="R$ 0,00"
+                @input="onCurrencyInput('salario', $event)"
               >
+              <span v-if="erros.salario" class="field-error">{{ erros.salario }}</span>
             </label>
 
             <label class="field">
@@ -232,7 +267,8 @@ const submitForm = async () => {
                 name="dependentes"
                 min="0"
                 max="50"
-                placeholder="0"
+                step="1"
+                placeholder="Ex.: 2"
               >
             </label>
           </div>
@@ -246,37 +282,37 @@ const submitForm = async () => {
             <label class="field">
               <span>Saúde</span>
               <input
-                v-model="form.saude"
-                type="number"
+                type="text"
                 name="saude"
-                min="0"
-                max="999999999"
-                placeholder="Ex.: 500,00"
+                inputmode="numeric"
+                placeholder="R$ 0,00"
+                @input="onCurrencyInput('saude', $event)"
               >
+              <span v-if="erros.saude" class="field-error">{{ erros.saude }}</span>
             </label>
 
             <label class="field">
               <span>Educação</span>
               <input
-                v-model="form.educacao"
-                type="number"
+                type="text"
                 name="educacao"
-                min="0"
-                max="999999999"
-                placeholder="Ex.: 300,00"
+                inputmode="numeric"
+                placeholder="R$ 0,00"
+                @input="onCurrencyInput('educacao', $event)"
               >
+              <span v-if="erros.educacao" class="field-error">{{ erros.educacao }}</span>
             </label>
 
             <label class="field">
               <span>PGBL</span>
               <input
-                v-model="form.pgbl"
-                type="number"
+                type="text"
                 name="pgbl"
-                min="0"
-                max="999999999"
-                placeholder="Ex.: 700,00"
+                inputmode="numeric"
+                placeholder="R$ 0,00"
+                @input="onCurrencyInput('pgbl', $event)"
               >
+              <span v-if="erros.pgbl" class="field-error">{{ erros.pgbl }}</span>
             </label>
 
             <label class="field full-span">
@@ -328,3 +364,12 @@ const submitForm = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.field-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #ff6b6b;
+}
+</style>
