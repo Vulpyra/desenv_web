@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
+import { useCurrency } from '@/composables/useCurrency'
 
 const props = defineProps({
   data: {
@@ -18,8 +19,14 @@ const props = defineProps({
   titleHint: {
     type: String,
     default: 'Mostra a divisão entre despesas e saldo com base nos valores atuais.'
+  },
+  centerValue: {
+    type: Number,
+    default: null
   }
 })
+
+const { formatCurrency } = useCurrency()
 
 const canvasRef = ref(null)
 let chartInstance = null
@@ -38,6 +45,28 @@ const buildChart = () => {
   const colorDanger = rootStyles.getPropertyValue('--danger-soft').trim() || 'rgba(255, 133, 153, 0.85)'
   const colorSaldo = rootStyles.getPropertyValue('--chart-b').trim() || 'rgba(113, 194, 217, 0.85)'
   const bgColor = rootStyles.getPropertyValue('--bg-mid').trim()
+  const textMain = rootStyles.getPropertyValue('--text-main').trim() || '#e8f1fa'
+  const textSoft = rootStyles.getPropertyValue('--text-soft').trim() || 'rgba(151,171,199,0.7)'
+
+  const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+      if (props.centerValue == null) return
+      const { ctx, chartArea: { top, bottom, left, right } } = chart
+      const cx = (left + right) / 2
+      const cy = (top + bottom) / 2
+      ctx.save()
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = textSoft
+      ctx.font = '500 11px system-ui, sans-serif'
+      ctx.fillText('Renda Total', cx, cy - 13)
+      ctx.fillStyle = textMain
+      ctx.font = 'bold 14px system-ui, sans-serif'
+      ctx.fillText(formatCurrency(props.centerValue), cx, cy + 10)
+      ctx.restore()
+    }
+  }
 
   chartInstance = new Chart(canvasRef.value.getContext('2d'), {
     type: 'doughnut',
@@ -55,7 +84,8 @@ const buildChart = () => {
       maintainAspectRatio: false,
       cutout: '75%',
       plugins: { legend: { display: false } }
-    }
+    },
+    plugins: [centerTextPlugin]
   })
 }
 
@@ -71,6 +101,7 @@ const updateChart = () => {
 
 onMounted(buildChart)
 watch(() => props.data, updateChart, { deep: true })
+watch(() => props.centerValue, () => { if (chartInstance) chartInstance.update() })
 </script>
 
 <template>

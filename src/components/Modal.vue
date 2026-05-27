@@ -13,6 +13,7 @@ const emit = defineEmits(['confirm', 'cancel'])
 
 const { maskCurrency, parseCurrency } = useCurrency()
 const inputValues = ref([])
+const warnings = ref([])
 const inputRefs = ref([])
 const previouslyFocused = ref(null)
 const modalRef = ref(null)
@@ -29,6 +30,7 @@ const resolveInitialValue = (field) => {
 
 watch(() => props.fields, (newFields) => {
   inputValues.value = newFields.map(resolveInitialValue)
+  warnings.value = newFields.map(() => null)
 }, { immediate: true })
 
 watch(() => props.isOpen, (open) => {
@@ -83,6 +85,8 @@ const handleInput = (event, index) => {
     maskCurrency(event)
     inputValues.value[index] = event.target.value
   }
+  const warnFn = props.fields[index]?.warningFn
+  if (warnFn) warnings.value[index] = warnFn(event.target.value) || null
 }
 
 const confirm = () => {
@@ -131,6 +135,13 @@ const cancel = () => {
             </option>
           </select>
           <input
+            v-else-if="field.type === 'date'"
+            :ref="(el) => setItemRef(el, index)"
+            v-model="inputValues[index]"
+            type="date"
+            class="modal-input"
+          />
+          <input
             v-else
             :ref="(el) => setItemRef(el, index)"
             v-model="inputValues[index]"
@@ -139,6 +150,9 @@ const cancel = () => {
             class="modal-input"
             @input="handleInput($event, index)"
           />
+          <p v-if="warnings[index]" class="modal-field-warning">
+            <i class="fas fa-circle-exclamation" style="margin-right: 4px"></i>{{ warnings[index] }}
+          </p>
         </template>
       </div>
       <div class="modal-actions">
