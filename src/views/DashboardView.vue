@@ -15,6 +15,7 @@ import QuickActions from '@/components/dashboard/QuickActions.vue'
 import EvolutionChart from '@/components/charts/EvolutionChart.vue'
 import GoalsPanel from '@/components/goals/GoalsPanel.vue'
 import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
+import EditEntryModal from '@/components/dashboard/EditEntryModal.vue'
 import Modal from '@/components/Modal.vue'
 import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
@@ -29,9 +30,40 @@ const {
   rendasCiclo, despesasFixasCiclo, totalRendaCiclo, totalDespesaCiclo,
   error: dashError,
   load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addDespesaMeta,
+  getUniqueName, updateRenda, updateDespesa, convertRendaToDespesa, convertDespesaToRenda,
   removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll,
   clearDespesas, clearTransacoes
 } = useDashboardData()
+
+// Edit entry state
+const editTarget = ref(null)
+const showEditModal = ref(false)
+const allNamesExcludingEdit = computed(() => {
+  const excludeId = editTarget.value?.id
+  return [
+    ...rendas.value.filter(r => r.id !== excludeId).map(r => r.nome),
+    ...despesas.value.filter(d => d.id !== excludeId).map(d => d.nome),
+    ...despesasAvulsas.value.filter(d => d.id !== excludeId).map(d => d.nome)
+  ]
+})
+
+const handleEditEntry = (item) => {
+  editTarget.value = item
+  showEditModal.value = true
+}
+
+const handleEditSave = async ({ id, tipoOriginal, nome, valor, tipo, data }) => {
+  if (tipoOriginal === tipo) {
+    if (tipo === 'renda') await updateRenda(id, nome, valor)
+    else await updateDespesa(id, nome, valor)
+  } else if (tipoOriginal === 'renda' && tipo === 'despesa') {
+    await convertRendaToDespesa(id, nome, valor, data || todayISO())
+  } else {
+    await convertDespesaToRenda(id, nome, valor, data || todayISO())
+  }
+  showEditModal.value = false
+  editTarget.value = null
+}
 
 const todayISO = () => new Date().toISOString().split('T')[0]
 const goalsPanelRef = ref(null)
@@ -146,15 +178,21 @@ const handleConfirm = (values) => {
     //     addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
     //   }
     //   break
-    case 'renda':
-      if (nome(values[0]) && valor(values[1])) addRenda(nome(values[0]), valor(values[1]), values[2] || todayISO())
+    case 'renda': {
+      const n = nome(values[0]); const v = valor(values[1])
+      if (n && v) addRenda(getUniqueName(n), v, values[2] || todayISO())
       break
-    case 'despesaFixa':
-      if (nome(values[0]) && valor(values[1])) addDespesaFixa(nome(values[0]), valor(values[1]), values[2] || todayISO())
+    }
+    case 'despesaFixa': {
+      const n = nome(values[0]); const v = valor(values[1])
+      if (n && v) addDespesaFixa(getUniqueName(n), v, values[2] || todayISO())
       break
-    case 'despesaAvulsa':
-      if (nome(values[0]) && valor(values[1])) addDespesaAvulsa(nome(values[0]), valor(values[1]), values[2] || todayISO())
+    }
+    case 'despesaAvulsa': {
+      const n = nome(values[0]); const v = valor(values[1])
+      if (n && v) addDespesaAvulsa(getUniqueName(n), v, values[2] || todayISO())
       break
+    }
     case 'confirmClearAll':
       clearAll()
       break
@@ -178,10 +216,18 @@ const modalAction = ref('')
 //   ])
 // }
 
+const nameWarningFn = (val) => {
+  const n = (val || '').trim()
+  if (!n) return null
+  const unique = getUniqueName(n)
+  if (unique === n) return null
+  return `O nome '${n}' já existe. Este item será nomeado: '${unique}'`
+}
+
 const openAddRenda = () => {
   modalAction.value = 'renda'
   open('Adicionar Renda', [
-    { placeholder: 'Nome da origem (ex: Salário)' },
+    { placeholder: 'Nome da origem (ex: Salário)', warningFn: nameWarningFn },
     { placeholder: 'Valor da Renda', isCurrency: true },
     { placeholder: 'Data do recebimento', type: 'date', value: todayISO() }
   ])
@@ -190,7 +236,7 @@ const openAddRenda = () => {
 const openAddDespesaFixa = () => {
   modalAction.value = 'despesaFixa'
   open('Nova Despesa Fixa', [
-    { placeholder: 'Nome da despesa (ex: Aluguel)' },
+    { placeholder: 'Nome da despesa (ex: Aluguel)', warningFn: nameWarningFn },
     { placeholder: 'Valor da despesa', isCurrency: true },
     { placeholder: 'Data da despesa', type: 'date', value: todayISO() }
   ])
@@ -199,7 +245,7 @@ const openAddDespesaFixa = () => {
 const openAddDespesaAvulsa = () => {
   modalAction.value = 'despesaAvulsa'
   open('Despesa Avulsa', [
-    { placeholder: 'Motivo (ex: Uber, Lanche)' },
+    { placeholder: 'Motivo (ex: Uber, Lanche)', warningFn: nameWarningFn },
     { placeholder: 'Valor da despesa', isCurrency: true },
     { placeholder: 'Data da despesa', type: 'date', value: todayISO() }
   ])
@@ -337,6 +383,7 @@ onMounted(load)
           @add-despesa="openAddDespesaFixa"
           @remove-renda="removeRenda"
           @remove-despesa="removeDespesa"
+          @edit-entry="handleEditEntry"
         />
 
         <QuickActions
@@ -385,5 +432,14 @@ onMounted(load)
     :message="message"
     @confirm="handleConfirm"
     @cancel="close"
+  />
+
+  <!-- Edit entry modal -->
+  <EditEntryModal
+    :is-open="showEditModal"
+    :entry="editTarget"
+    :all-names="allNamesExcludingEdit"
+    @close="showEditModal = false; editTarget = null"
+    @save="handleEditSave"
   />
 </template>

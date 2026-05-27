@@ -363,6 +363,42 @@ export function useDashboardData() {
       : 0
   }
 
+  // Nomes únicos
+  const getUniqueName = (name, excludeId = null) => {
+    const existing = [...rendas.value, ...despesas.value, ...despesasAvulsas.value]
+      .filter(e => e.id !== excludeId)
+      .map(e => e.nome.toLowerCase())
+    if (!existing.includes(name.toLowerCase())) return name
+    let counter = 1
+    while (existing.includes(`${name}(${counter})`.toLowerCase())) counter++
+    return `${name}(${counter})`
+  }
+
+  // Editar
+  const updateRenda = async (id, nome, valor) => {
+    const { error: err } = await supabase.from('rendas').update({ nome, valor }).eq('id', id)
+    if (err) { error.value = err.message; return }
+    const item = rendas.value.find(r => r.id === id)
+    if (item) { item.nome = nome; item.valor = valor }
+  }
+
+  const updateDespesa = async (id, nome, valor) => {
+    const { error: err } = await supabase.from('despesas').update({ nome, valor }).eq('id', id)
+    if (err) { error.value = err.message; return }
+    const item = [...despesas.value, ...despesasAvulsas.value].find(d => d.id === id)
+    if (item) { item.nome = nome; item.valor = valor }
+  }
+
+  const convertRendaToDespesa = async (id, nome, valor, data_lancamento) => {
+    await removeRenda(id)
+    await addDespesaFixa(nome, valor, data_lancamento)
+  }
+
+  const convertDespesaToRenda = async (id, nome, valor, data_lancamento) => {
+    await removeDespesa(id)
+    await addRenda(nome, valor, data_lancamento)
+  }
+
   // Remover
   const removeRenda = async (id) => {
     const { error: err } = await supabase.from('rendas').delete().eq('id', id)
@@ -482,6 +518,11 @@ export function useDashboardData() {
     addMeta,
     addDespesaMeta,
     addHistorico,
+    getUniqueName,
+    updateRenda,
+    updateDespesa,
+    convertRendaToDespesa,
+    convertDespesaToRenda,
     removeRenda,
     removeDespesa,
     removeMeta,
