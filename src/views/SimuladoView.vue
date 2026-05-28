@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
@@ -7,7 +7,7 @@ import { useCurrency } from '@/composables/useCurrency'
 
 const router = useRouter()
 const { getSession } = useAuth()
-const { parseCurrency, maskCurrency } = useCurrency()
+const { parseCurrency, maskCurrency, formatCurrency } = useCurrency()
 
 const LIMITE_MOEDA = 99999999
 
@@ -31,7 +31,42 @@ const erros = reactive({
   pgbl: '',
 })
 
-const formatarCPF = (valor) => {
+const loadFormsData = async () => {
+  const session = await getSession()
+
+  if (!session) {
+    alert('Sessão expirada. Faça login novamente.')
+    router.push('/auth')
+    return
+  }
+
+  const uid = session.user.id
+  
+  const [
+  { data: simuladoData }
+  ] = await Promise.all([
+    supabase.from('simulados').select('*').eq('usuario_id', uid)
+  ])
+
+  if(!simuladoData) return;
+    
+  const row = simuladoData?.[0]
+  if (!row) return
+
+  form.nome        = row.nome        ?? ''
+  form.cpf         = row.cpf         ? formatCPF(row.cpf) : ''
+  form.idade       = row.idade       ?? ''
+  form.dependentes = row.dependentes ?? ''
+  form.observacoes = row.observacoes ?? ''
+  form.salario     = row.salario     ? formatCurrency(row.salario)   : ''
+  form.saude       = row.saude       ? formatCurrency(row.saude)     : ''
+  form.educacao    = row.educacao    ? formatCurrency(row.educacao)  : ''
+  form.pgbl        = row.pgbl        ? formatCurrency(row.pgbl)      : ''
+
+  console.log(`salario: ${form.salario}`)
+}
+
+const formatCPF = (valor) => {
   const digits = valor.replace(/\D/g, '').slice(0, 11)
   return digits
     .replace(/(\d{3})(\d)/, '$1.$2')
@@ -40,7 +75,7 @@ const formatarCPF = (valor) => {
 }
 
 const onCPFInput = (e) => {
-  form.cpf = formatarCPF(e.target.value)
+  form.cpf = formatCPF(e.target.value)
   erros.cpf = ''
 }
 
@@ -92,6 +127,8 @@ const onCurrencyInput = (field, event) => {
 }
 
 
+onMounted(loadFormsData)
+
 const goBack = () => router.push('/')
 const goToProfile = () => router.push('/perfil')
 
@@ -118,6 +155,9 @@ const submitForm = async () => {
   }
 
   const uid = session.user.id
+
+  await supabase.from('simulados').delete().eq('usuario_id', uid)
+
   const operacoes = []
 
   if (form.nome) {
@@ -158,9 +198,14 @@ const submitForm = async () => {
   operacoes.push(
     supabase.from('simulados').insert({
       usuario_id: uid,
+      nome: form.nome,
       cpf: form.cpf || null,
       idade: form.idade ? Number(form.idade) : null,
+      salario: Number(parseCurrency(form.salario)),
       dependentes: form.dependentes ? Number(form.dependentes) : null,
+      saude: Number(parseCurrency(form.saude)),
+      educacao: Number(parseCurrency(form.educacao)),
+      pgbl: Number(parseCurrency(form.pgbl)),
       observacoes: form.observacoes || null,
     })
   )
@@ -250,6 +295,7 @@ const submitForm = async () => {
             <label class="field">
               <span>Salário mensal</span>
               <input
+                :value="form.salario"
                 type="text"
                 name="salario"
                 inputmode="numeric"
@@ -282,6 +328,7 @@ const submitForm = async () => {
             <label class="field">
               <span>Saúde</span>
               <input
+                :value="form.saude"
                 type="text"
                 name="saude"
                 inputmode="numeric"
@@ -294,6 +341,7 @@ const submitForm = async () => {
             <label class="field">
               <span>Educação</span>
               <input
+                :value="form.educacao"
                 type="text"
                 name="educacao"
                 inputmode="numeric"
@@ -306,6 +354,7 @@ const submitForm = async () => {
             <label class="field">
               <span>PGBL</span>
               <input
+                :value="form.pgbl"
                 type="text"
                 name="pgbl"
                 inputmode="numeric"
