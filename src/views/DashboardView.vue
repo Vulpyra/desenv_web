@@ -146,7 +146,7 @@ const pieData = computed(() => {
 
   return [despesasEfetivas, saldoCiclo]
 })
-const pieLabels = computed(() => ['Despesas', 'Saldo'])
+const pieLabels = computed(() => ['Saldo', 'Despesas'])
 
 const toggleVisibilidade = () => {
   valoresOcultos.value = !valoresOcultos.value
@@ -154,7 +154,7 @@ const toggleVisibilidade = () => {
 
 // Navegação
 const goToSimulado = () => {
-  window.location.href = '/simulado'
+  router.push('/simulado')
 }
 
 const goToProfile = () => {
