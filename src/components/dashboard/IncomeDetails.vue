@@ -109,6 +109,7 @@ const doRemove = (item) => {
   </div>
 
   <!-- Delete confirmation modal -->
+
   <Teleport to="body">
     <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget = null" role="dialog" aria-modal="true">
       <div class="glass-panel modal-content" style="width: min(380px, 95vw)">
@@ -139,3 +140,17 @@ const doRemove = (item) => {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.income-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detail-list {
+  overflow-y: auto;
+  max-height: 300px;
+  min-height: 0;
+}
+</style>

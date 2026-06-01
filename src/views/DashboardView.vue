@@ -146,7 +146,7 @@ const pieData = computed(() => {
 
   return [despesasEfetivas, saldoCiclo]
 })
-const pieLabels = computed(() => ['Saldo', 'Despesas'])
+const pieLabels = computed(() => ['Despesas', 'Saldo'])
 
 const toggleVisibilidade = () => {
   valoresOcultos.value = !valoresOcultos.value
@@ -194,12 +194,15 @@ const handleConfirm = (values) => {
       break
     }
     case 'confirmClearAll':
+      if ((values[0] || '').trim() !== 'EXCLUIR') return
       clearAll()
       break
     case 'confirmClearDespesas':
+      if ((values[0] || '').trim().toUpperCase() !== 'SIM') return
       clearDespesas()
       break
     case 'confirmClearTransacoes':
+      if ((values[0] || '').trim().toUpperCase() !== 'SIM') return
       clearTransacoes()
       break
   }
