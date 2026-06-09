@@ -68,6 +68,30 @@ const buildChart = () => {
     }
   }
 
+  if (Chart.Tooltip?.positioners) {
+    Chart.Tooltip.positioners.outerArc = function (elements) {
+      if (!elements.length) return false
+      const el = elements[0].element
+      const chart = this.chart
+      const cx = (chart.chartArea.left + chart.chartArea.right) / 2
+      const cy = (chart.chartArea.top + chart.chartArea.bottom) / 2
+      const mid = (el.startAngle + el.endAngle) / 2
+      const cosVal = Math.cos(mid)
+      const sinVal = Math.sin(mid)
+      const r = el.outerRadius * 1.25
+      // Align caret to point back toward the ring from outside
+      let xAlign, yAlign
+      if (Math.abs(cosVal) >= Math.abs(sinVal)) {
+        xAlign = cosVal > 0 ? 'left' : 'right'
+        yAlign = 'center'
+      } else {
+        xAlign = 'center'
+        yAlign = sinVal > 0 ? 'top' : 'bottom'
+      }
+      return { x: cx + cosVal * r, y: cy + sinVal * r, xAlign, yAlign }
+    }
+  }
+
   chartInstance = new Chart(canvasRef.value.getContext('2d'), {
     type: 'doughnut',
     data: {
@@ -83,7 +107,10 @@ const buildChart = () => {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '75%',
-      plugins: { legend: { display: false } }
+      plugins: {
+        legend: { display: false },
+        tooltip: { position: 'outerArc' }
+      }
     },
     plugins: [centerTextPlugin]
   })
@@ -115,11 +142,11 @@ watch(() => props.centerValue, () => { if (chartInstance) chartInstance.update()
     <div class="chart-labels">
       <div class="label-item right">
         <p>{{ labels[1] }}</p>
-        <span style="color: var(--danger-soft)">{{ percentages[0] }}%</span>
+        <span style="color: var(--accent-cyan)">{{ percentages[1] }}%</span>
       </div>
       <div class="label-item left">
         <p>{{ labels[0] }}</p>
-        <span style="color: var(--accent-cyan)">{{ percentages[1] }}%</span>
+        <span style="color: var(--danger-soft)">{{ percentages[0] }}%</span>
       </div>
     </div>
   </div>

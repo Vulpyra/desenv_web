@@ -77,29 +77,44 @@ export function useDashboardData() {
 
   const saldo = computed(() => totalRenda.value - totalDespesa.value)
 
+  const getCycleStartForDate = (date) => {
+    const y = date.getFullYear()
+    const m = date.getMonth()
+    const fifth = getNthWorkday(y, m, 5)
+    if (date >= fifth) return fifth
+    const pm = m === 0 ? 11 : m - 1
+    const py = m === 0 ? y - 1 : y
+    return getNthWorkday(py, pm, 5)
+  }
+
   const historicoCalculado = computed(() => {
-    const monthlyFlow = {}
+    const cycleFlow = {}
+
+    const addFlow = (dateStr, amount) => {
+      const date = parseEntryDate(dateStr)
+      const cs = getCycleStartForDate(date)
+      const key = `${cs.getFullYear()}-${String(cs.getMonth() + 1).padStart(2, '0')}`
+      cycleFlow[key] = (cycleFlow[key] || 0) + amount
+    }
 
     for (const r of rendas.value) {
       if (!r.data) continue
-      const key = String(r.data).substring(0, 7)
-      monthlyFlow[key] = (monthlyFlow[key] || 0) + Number(r.valor)
+      addFlow(r.data, Number(r.valor))
     }
 
     for (const d of [...despesas.value, ...despesasAvulsas.value]) {
       if (!d.data) continue
-      const key = String(d.data).substring(0, 7)
-      monthlyFlow[key] = (monthlyFlow[key] || 0) - Number(d.valor)
+      addFlow(d.data, -Number(d.valor))
     }
 
-    const months = Object.keys(monthlyFlow).sort()
+    const cycles = Object.keys(cycleFlow).sort()
     let cumulative = 0
     const labels = []
     const dados = []
 
-    for (const month of months) {
-      cumulative += monthlyFlow[month]
-      const [year, monthNum] = month.split('-')
+    for (const cycle of cycles) {
+      cumulative += cycleFlow[cycle]
+      const [year, monthNum] = cycle.split('-')
       labels.push(`${MONTH_NAMES[parseInt(monthNum, 10) - 1]}/${year.slice(2)}`)
       dados.push(cumulative)
     }
