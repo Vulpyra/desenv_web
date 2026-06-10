@@ -12,7 +12,7 @@ const closeGuide = () => {
   showGuide.value = false
 }
 
-const apiUrl = import.meta.env.VITE_AI_API_URL || '127.0.0.1:8008'
+const apiUrl = import.meta.env.VITE_AI_API_URL || 'http://127.0.0.1:8008'
 const apiMode = (import.meta.env.VITE_AI_API_MODE || 'auto').toLowerCase()
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const getWaitTimeMs = () => Math.floor(30000 + Math.random() * 30001)
@@ -91,7 +91,6 @@ const requestText = async (question) => {
     body: question
   })
 
-  console.log(`Received response: ${response.json()}`)
   return parseApiResponse(response)
 }
 
