@@ -12,6 +12,12 @@ export { default as StatCards } from './dashboard/StatCards.vue'
 export { default as IncomeDetails } from './dashboard/IncomeDetails.vue'
 export { default as AISuggestion } from './dashboard/AISuggestion.vue'
 export { default as QuickActions } from './dashboard/QuickActions.vue'
+export { default as CycleSelector } from './dashboard/CycleSelector.vue'
+export { default as IncomePanel } from './dashboard/IncomePanel.vue'
+export { default as FlowPanel } from './dashboard/FlowPanel.vue'
+export { default as BillsPanel } from './dashboard/BillsPanel.vue'
+export { default as SpendPanel } from './dashboard/SpendPanel.vue'
+export { default as AssistantPanel } from './dashboard/AssistantPanel.vue'
 
 // Charts
 export { default as PieChart } from './charts/PieChart.vue'

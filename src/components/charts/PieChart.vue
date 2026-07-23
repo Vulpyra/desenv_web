@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 import { useCurrency } from '@/composables/useCurrency'
 
@@ -12,6 +12,11 @@ const props = defineProps({
     type: Array,
     default: () => ['Não dedutível', 'Dedutível']
   },
+  // Variáveis CSS usadas como cor de cada fatia, na ordem dos dados
+  colorVars: {
+    type: Array,
+    default: () => ['--danger-soft', '--chart-b']
+  },
   title: {
     type: String,
     default: 'Gráfico de Renda'
@@ -23,10 +28,29 @@ const props = defineProps({
   centerValue: {
     type: Number,
     default: null
+  },
+  centerLabel: {
+    type: String,
+    default: 'Renda Total'
+  },
+  showLegend: {
+    type: Boolean,
+    default: true
+  },
+  isHidden: {
+    type: Boolean,
+    default: false
+  },
+  // Renderiza apenas o gráfico, sem o painel/cabeçalho (para uso dentro de outro painel)
+  bare: {
+    type: Boolean,
+    default: false
   }
 })
 
 const { formatCurrency } = useCurrency()
+
+const FALLBACK_COLORS = ['rgba(255, 133, 153, 0.85)', 'rgba(113, 194, 217, 0.85)', 'rgba(144, 175, 217, 0.85)', 'rgba(126, 167, 217, 0.85)']
 
 const canvasRef = ref(null)
 let chartInstance = null
@@ -37,13 +61,20 @@ const percentages = computed(() => {
   return props.data.map(v => Math.round((v / total) * 100))
 })
 
+const resolveColors = () => {
+  const rootStyles = getComputedStyle(document.documentElement)
+  return props.data.map((_, i) => {
+    const varName = props.colorVars[i]
+    const resolved = varName ? rootStyles.getPropertyValue(varName).trim() : ''
+    return resolved || FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+  })
+}
+
 const buildChart = () => {
   if (!canvasRef.value || typeof Chart === 'undefined') return
   if (chartInstance) { chartInstance.destroy(); chartInstance = null }
 
   const rootStyles = getComputedStyle(document.documentElement)
-  const colorDanger = rootStyles.getPropertyValue('--danger-soft').trim() || 'rgba(255, 133, 153, 0.85)'
-  const colorSaldo = rootStyles.getPropertyValue('--chart-b').trim() || 'rgba(113, 194, 217, 0.85)'
   const bgColor = rootStyles.getPropertyValue('--bg-mid').trim()
   const textMain = rootStyles.getPropertyValue('--text-main').trim() || '#e8f1fa'
   const textSoft = rootStyles.getPropertyValue('--text-soft').trim() || 'rgba(151,171,199,0.7)'
@@ -60,10 +91,10 @@ const buildChart = () => {
       ctx.textBaseline = 'middle'
       ctx.fillStyle = textSoft
       ctx.font = '500 11px system-ui, sans-serif'
-      ctx.fillText('Renda Total', cx, cy - 13)
+      ctx.fillText(props.centerLabel, cx, cy - 13)
       ctx.fillStyle = textMain
       ctx.font = 'bold 14px system-ui, sans-serif'
-      ctx.fillText(formatCurrency(props.centerValue), cx, cy + 10)
+      ctx.fillText(props.isHidden ? 'R$ ••••' : formatCurrency(props.centerValue), cx, cy + 10)
       ctx.restore()
     }
   }
@@ -98,7 +129,7 @@ const buildChart = () => {
       labels: props.labels,
       datasets: [{
         data: props.data,
-        backgroundColor: [colorDanger, colorSaldo],
+        backgroundColor: resolveColors(),
         borderWidth: 3,
         borderColor: bgColor
       }]
@@ -109,7 +140,7 @@ const buildChart = () => {
       cutout: '75%',
       plugins: {
         legend: { display: false },
-        tooltip: { position: 'outerArc' }
+        tooltip: { enabled: !props.isHidden, position: 'outerArc' }
       }
     },
     plugins: [centerTextPlugin]
@@ -123,30 +154,37 @@ const updateChart = () => {
   }
   chartInstance.data.labels = [...props.labels]
   chartInstance.data.datasets[0].data = [...props.data]
+  chartInstance.data.datasets[0].backgroundColor = resolveColors()
+  chartInstance.options.plugins.tooltip.enabled = !props.isHidden
   chartInstance.update()
 }
 
 onMounted(buildChart)
 watch(() => props.data, updateChart, { deep: true })
+watch(() => props.labels, updateChart, { deep: true })
+watch(() => props.isHidden, updateChart)
 watch(() => props.centerValue, () => { if (chartInstance) chartInstance.update() })
+
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
+})
 </script>
 
 <template>
-  <div class="chart-section">
-    <div class="panel-header" style="margin-bottom: 18px">
+  <div :class="bare ? '' : 'chart-section'">
+    <div v-if="!bare" class="panel-header" style="margin-bottom: 18px">
       <GlossaryTerm :term="title" :explanation="titleHint" />
     </div>
     <div class="chart-container" style="position: relative; height: 220px; width: 100%; margin: 0 auto;">
       <canvas ref="canvasRef"></canvas>
     </div>
-    <div class="chart-labels">
-      <div class="label-item right">
-        <p>{{ labels[1] }}</p>
-        <span style="color: var(--accent-cyan)">{{ percentages[1] }}%</span>
-      </div>
-      <div class="label-item left">
-        <p>{{ labels[0] }}</p>
-        <span style="color: var(--danger-soft)">{{ percentages[0] }}%</span>
+    <div v-if="showLegend" class="chart-labels">
+      <div v-for="(label, i) in labels" :key="label" class="label-item" :class="i === 0 ? 'left' : 'right'">
+        <p>{{ label }}</p>
+        <span :style="{ color: `var(${colorVars[i] || '--text-title'})` }">{{ percentages[i] }}%</span>
       </div>
     </div>
   </div>
