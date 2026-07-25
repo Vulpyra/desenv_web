@@ -300,7 +300,21 @@ create policy planner_categoria_gastos_owner on public.planner_categoria_gastos
 
 drop policy if exists planner_contas_pagas_owner on public.planner_contas_pagas;
 create policy planner_contas_pagas_owner on public.planner_contas_pagas
-  for all using (auth.uid() = usuario_id) with check (auth.uid() = usuario_id);
+  for all
+  using (
+    auth.uid() = usuario_id
+    and exists (
+      select 1 from public.planner_contas_fixas c
+      where c.id = conta_id and c.usuario_id = auth.uid()
+    )
+  )
+  with check (
+    auth.uid() = usuario_id
+    and exists (
+      select 1 from public.planner_contas_fixas c
+      where c.id = conta_id and c.usuario_id = auth.uid()
+    )
+  );
 
 drop policy if exists planner_faturas_pagas_owner on public.planner_faturas_pagas;
 create policy planner_faturas_pagas_owner on public.planner_faturas_pagas
