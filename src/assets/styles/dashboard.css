@@ -515,3 +515,834 @@
   display: flex;
   flex-direction: column;
 }
+
+/* ========================================
+   Painéis do ciclo (Entradas, Fluxo, Contas, Gastos)
+   ======================================== */
+
+/* Seletor de ciclo (topo) */
+.cycle-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(129, 178, 224, 0.08);
+  border: 1px solid rgba(180, 213, 243, 0.2);
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.cycle-btn {
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.cycle-btn:hover {
+  background: rgba(149, 194, 230, 0.16);
+  color: var(--text-title);
+}
+
+.cycle-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+  min-width: 128px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cycle-reset {
+  color: var(--accent-cyan);
+}
+
+/* Linha 2 do painel: Preciso pagar · Planejo gastar */
+.mid-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.mid-content > * {
+  min-width: 0;
+}
+
+/* Tipografia auxiliar dos painéis */
+.panel-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.big-number {
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-title);
+  margin: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-hint {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.panel-empty {
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.entry-text,
+.detail-list li .entry-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+}
+
+.item-sub {
+  font-size: 0.74rem;
+  color: var(--text-soft);
+}
+
+/* Contas fixas: pagas */
+.chk-paid {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid rgba(184, 212, 245, 0.35);
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chk-paid:checked {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+}
+
+.chk-paid:checked::after {
+  content: '\2713';
+  color: #081f35;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.item-paid {
+  opacity: 0.5;
+}
+
+.item-paid .entry-text > span:first-child {
+  text-decoration: line-through;
+}
+
+/* Rodapé de painel (Restante a pagar) */
+.panel-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(130, 185, 230, 0.15);
+}
+
+.foot-label {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.foot-big {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Medidor do teto de gastos */
+.gauge-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.gauge-num {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-num-sm {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-title);
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-bar {
+  height: 14px;
+  border-radius: 8px;
+  background: rgba(186, 219, 246, 0.1);
+  border: 1px solid rgba(130, 185, 230, 0.2);
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--chart-a), var(--chart-b));
+  border-radius: 8px;
+  transition: width 0.35s ease, background 0.35s ease;
+  max-width: 100%;
+  box-shadow: 0 0 10px rgba(113, 194, 217, 0.4);
+}
+
+.gauge-fill.over {
+  background: linear-gradient(90deg, var(--danger-soft), #d6645a);
+  box-shadow: 0 0 10px rgba(255, 133, 153, 0.4);
+}
+
+.gauge-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  margin-top: 8px;
+}
+
+/* Legenda do fluxo (Comprometido / Metas / Livre) */
+.flow-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 18px;
+  font-size: 0.88rem;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legend-name {
+  display: flex;
+  align-items: center;
+  color: var(--text-soft);
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.legend-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Meta em destaque */
+.featured-goal {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 14px;
+  background: rgba(10, 22, 52, 0.4);
+  border: 1px solid rgba(130, 185, 230, 0.2);
+  border-radius: 14px;
+}
+
+.featured-goal-name {
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--text-title);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.featured-goal-name i {
+  color: var(--accent-cyan);
+  font-size: 0.85rem;
+}
+
+/* Painel do assistente */
+.assistant-panel .ai-suggestion-box {
+  margin-bottom: 16px;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.assistant-disclaimer {
+  font-size: 0.74rem;
+  color: var(--text-soft);
+  padding: 9px 11px;
+  background: rgba(10, 22, 52, 0.3);
+  border: 1px solid rgba(130, 185, 230, 0.15);
+  border-radius: 9px;
+  margin-bottom: 12px;
+}
+
+.glossary-chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+/* Delta da evolução patrimonial */
+.evolution-delta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rodapé de utilidades */
+.util-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(130, 185, 230, 0.12);
+}
+
+.util-note {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+.util-danger {
+  flex: 0 0 auto;
+  color: var(--danger-soft);
+  border-color: rgba(255, 133, 153, 0.3);
+  background: rgba(255, 133, 153, 0.05);
+}
+
+.util-danger:hover {
+  background: rgba(255, 133, 153, 0.12);
+  border-color: rgba(255, 133, 153, 0.45);
+}
+
+/* Aportes em metas dentro de "Preciso pagar" */
+.aportes-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(130, 185, 230, 0.12);
+}
+
+.aportes-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+
+.aportes-title i {
+  color: var(--accent-sky);
+  font-size: 0.75rem;
+}
+
+/* ========================================
+   Cabeçalhos de grupo / subgrupo (Preciso pagar, Planejo gastar)
+   ======================================== */
+.group-hdr {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 18px 0 9px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.group-hdr:first-of-type {
+  margin-top: 6px;
+}
+
+.group-hdr i {
+  color: var(--accent-cyan);
+  font-size: 0.9rem;
+}
+
+.group-hdr--spread {
+  justify-content: space-between;
+}
+
+.paid-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.paid-toggle .chk-paid {
+  width: 18px;
+  height: 18px;
+}
+
+.sub-hdr {
+  font-size: 0.72rem;
+  color: var(--text-soft);
+  margin: 12px 0 6px 2px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+}
+
+.sub-hdr i {
+  font-size: 0.8rem;
+}
+
+/* Listas de itens do planner (cada item num pequeno bloco) */
+.planner-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.planner-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(10, 22, 52, 0.4);
+  border: 1px solid rgba(130, 185, 230, 0.2);
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+
+.planner-list li.item-paid {
+  opacity: 0.5;
+}
+
+.planner-list li.item-paid .entry-text > span:first-child {
+  text-decoration: line-through;
+}
+
+.li-left {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  flex: 1;
+}
+
+.li-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.li-ic {
+  color: var(--accent-sky);
+  font-size: 0.9rem;
+  width: 20px;
+  text-align: center;
+}
+
+/* Campo de valor editável inline */
+.amt-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.amt-cur {
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.amt-in {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: var(--danger-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  width: 74px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 0;
+}
+
+.amt-in:focus {
+  outline: none;
+  border-bottom-color: currentColor;
+}
+
+/* Linha "ghost" de adição inline */
+.ghost-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: 1.5px dashed rgba(130, 185, 230, 0.3);
+  border-radius: 12px;
+  padding: 6px 12px;
+  margin-top: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ghost-row:focus-within {
+  border-color: var(--accent-cyan);
+  background: rgba(120, 200, 231, 0.05);
+}
+
+.gh-plus {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  place-items: center;
+  color: var(--text-soft);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.ghost-row:focus-within .gh-plus {
+  color: var(--accent-cyan);
+}
+
+.ghost-row input {
+  background: transparent;
+  border: 0;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 7px 2px;
+  min-width: 0;
+}
+
+.ghost-row input:focus {
+  outline: none;
+}
+
+.ghost-row input::placeholder {
+  color: var(--text-soft);
+}
+
+.gh-name {
+  flex: 1;
+  min-width: 50px;
+}
+
+.gh-day {
+  width: 44px;
+  text-align: center;
+}
+
+.gh-amt {
+  width: 74px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.gh-commit {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(113, 194, 217, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(113, 194, 217, 0.4);
+  cursor: pointer;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.gh-commit:hover {
+  background: var(--accent-cyan);
+  color: #04241f;
+}
+
+/* Totais da fatura */
+.inv-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 14px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(130, 185, 230, 0.15);
+}
+
+.sub-inv {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: var(--text-soft);
+  padding-top: 5px;
+}
+
+.sub-inv b {
+  color: var(--text-main);
+}
+
+/* Categorias de gasto planejado (barras altas) */
+.budget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.budget-row {
+  background: rgba(10, 22, 52, 0.4);
+  border: 1px solid rgba(130, 185, 230, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.budget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.budget-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-title);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pbar2 {
+  position: relative;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(186, 219, 246, 0.09);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.pbar2-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, rgba(113, 194, 217, 0.55), rgba(113, 194, 217, 0.4));
+  border-radius: 9px;
+  transition: width 0.35s, background 0.35s;
+}
+
+.pbar2-fill.over {
+  background: linear-gradient(90deg, rgba(255, 133, 153, 0.55), rgba(255, 133, 153, 0.4));
+}
+
+.pbar2-lbl {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #eef5ff;
+  text-shadow: 0 1px 2px rgba(0, 10, 25, 0.6);
+  pointer-events: none;
+}
+
+.pbar2-lbl.l-left {
+  left: 11px;
+}
+
+.pbar2-lbl.l-right {
+  right: 11px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  pointer-events: auto;
+}
+
+.cap-in {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: #eef5ff;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: 62px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding: 0;
+}
+
+.cap-in:focus {
+  outline: none;
+  border-bottom-color: rgba(238, 245, 255, 0.6);
+}
+
+/* Linha de lançamento rápido (gasto / investimento) */
+.spend-row {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.mini-in {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(130, 185, 230, 0.2);
+  border-radius: 7px;
+  color: var(--text-main);
+  padding: 6px 9px;
+  font: inherit;
+  font-size: 0.78rem;
+  width: 92px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-in:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+.mini-btn {
+  background: rgba(113, 194, 217, 0.12);
+  border: 1px solid rgba(113, 194, 217, 0.3);
+  border-radius: 7px;
+  color: var(--accent-cyan);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.mini-btn:hover {
+  background: rgba(113, 194, 217, 0.25);
+}
+
+.mini-in--goal:focus {
+  border-color: var(--accent-sky);
+}
+
+.mini-btn--goal {
+  background: rgba(144, 175, 217, 0.14);
+  border-color: rgba(144, 175, 217, 0.35);
+  color: var(--accent-sky);
+}
+
+.mini-btn--goal:hover {
+  background: rgba(144, 175, 217, 0.28);
+}
+
+/* Metas: cada meta em seu próprio card com investimento inline */
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goal-card {
+  background: rgba(10, 22, 52, 0.4);
+  border: 1px solid rgba(130, 185, 230, 0.2);
+  border-radius: 14px;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-card .goal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  color: var(--text-title);
+}
+
+.goal-card .goal-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-card .goal-pct {
+  margin-left: 0;
+  color: var(--accent-sky);
+  font-weight: 700;
+}
+
+.goal-card .btn-remove {
+  margin-left: 0;
+}
+
+@media (max-width: 992px) {
+  .mid-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .cycle-label {
+    min-width: 104px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-bar .cycle-pill {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .big-number {
+    font-size: 1.6rem;
+  }
+}

@@ -2,40 +2,66 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardData } from '@/composables/useDashboardData'
+import { usePlanner } from '@/composables/usePlanner'
 import { useModal } from '@/composables/useModal'
 import { useCurrency } from '@/composables/useCurrency'
 import { useAuth } from '@/composables/useAuth'
 
 // Componentes
-import StatCards from '@/components/dashboard/StatCards.vue'
-import PieChart from '@/components/charts/PieChart.vue'
-import IncomeDetails from '@/components/dashboard/IncomeDetails.vue'
-import AISuggestion from '@/components/dashboard/AISuggestion.vue'
-import QuickActions from '@/components/dashboard/QuickActions.vue'
+import CycleSelector from '@/components/dashboard/CycleSelector.vue'
+import IncomePanel from '@/components/dashboard/IncomePanel.vue'
+import FlowPanel from '@/components/dashboard/FlowPanel.vue'
+import BillsPanel from '@/components/dashboard/BillsPanel.vue'
+import SpendPanel from '@/components/dashboard/SpendPanel.vue'
+import AssistantPanel from '@/components/dashboard/AssistantPanel.vue'
 import EvolutionChart from '@/components/charts/EvolutionChart.vue'
 import GoalsPanel from '@/components/goals/GoalsPanel.vue'
 import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
 import EditEntryModal from '@/components/dashboard/EditEntryModal.vue'
 import Modal from '@/components/Modal.vue'
-import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 const router = useRouter()
 const { signOut } = useAuth()
 
-// Estado
+// Estado (Supabase): entradas, metas, transações, evolução
 const { formatCurrency } = useCurrency()
 const {
   rendas, despesas, despesasAvulsas, metas, transacoes,
-  saldo, historicoCalculado,
-  rendasCiclo, despesasFixasCiclo, totalRendaCiclo, totalDespesaCiclo,
+  rendasCiclo, totalRendaCiclo, totalAportesMetaCiclo,
+  selectedCycle, selectedCycleIndex, cycleIndexOfDate, labelForCycleIndex,
+  cycleLabel, isCurrentCycle, prevCycle, nextCycle, resetCycle,
   error: dashError,
-  load, addRenda, addDespesaFixa, addDespesaAvulsa, addMeta, addDespesaMeta,
-  getUniqueName, updateRenda, updateDespesa, convertRendaToDespesa, convertDespesaToRenda,
-  removeRenda, removeDespesa, removeMeta, removeTransacao, clearAll,
-  clearDespesas, clearTransacoes
+  load, addRenda, addMeta, addDespesaMeta,
+  getUniqueName, updateRenda, removeRenda, removeMeta, removeTransacao,
+  clearAll, clearTransacoes
 } = useDashboardData()
 
-// Edit entry state
+// Estado (Supabase): contas fixas recorrentes, parcelas, compras únicas, categorias de gasto
+const {
+  fixedCiclo, installmentsCiclo, oneTimeCiclo, budgetsCiclo,
+  totalInstallments, totalOneTime, totalInvoice, comprometido: plannerComprometido,
+  totalBudget, totalGasto, fixedPaidIds, invoicePaid, totalPago, restante: plannerRestante,
+  comprometidoAt, gastoAt, earliestIndex, hasFixed, hasBudgets,
+  addFixed, addInstallment, addOneTime, addBudget,
+  setAmount, setBudgetLimit, launchSpend,
+  toggleFixedPaid, toggleInvoicePaid,
+  removeFixed, removeInstallment, removeOneTime, removeBudget,
+  load: loadPlanner, error: plannerError, clear: clearPlanner
+} = usePlanner(selectedCycleIndex)
+
+// Fluxo do ciclo: livre = renda − comprometido − aportes em metas; teto de gasto = livre
+const livre = computed(() => totalRendaCiclo.value - plannerComprometido.value - totalAportesMetaCiclo.value)
+const restam = computed(() => livre.value - totalGasto.value)
+
+// Datas: novos lançamentos caem no ciclo que está sendo visualizado
+const toLocalISO = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const todayISO = () => toLocalISO(new Date())
+const defaultEntryDate = computed(() =>
+  isCurrentCycle.value ? todayISO() : toLocalISO(selectedCycle.value.start)
+)
+
+// ---- Edição de entradas (rendas, via Supabase) ----
 const editTarget = ref(null)
 const showEditModal = ref(false)
 const allNamesExcludingEdit = computed(() => {
@@ -52,20 +78,51 @@ const handleEditEntry = (item) => {
   showEditModal.value = true
 }
 
-const handleEditSave = async ({ id, tipoOriginal, nome, valor, tipo, data }) => {
-  if (tipoOriginal === tipo) {
-    if (tipo === 'renda') await updateRenda(id, nome, valor)
-    else await updateDespesa(id, nome, valor)
-  } else if (tipoOriginal === 'renda' && tipo === 'despesa') {
-    await convertRendaToDespesa(id, nome, valor, data || todayISO())
-  } else {
-    await convertDespesaToRenda(id, nome, valor, data || todayISO())
+const handleEditSave = async ({ id, tipoOriginal, nome, valor, tipo }) => {
+  if (tipo === 'renda') {
+    await updateRenda(id, nome, valor)
+  } else if (tipoOriginal === 'renda') {
+    // Renda convertida em conta: some das entradas e vira conta fixa recorrente
+    await removeRenda(id)
+    addFixed(nome, valor)
   }
   showEditModal.value = false
   editTarget.value = null
 }
 
-const todayISO = () => new Date().toISOString().split('T')[0]
+// ---- Remoção com confirmação (entradas + itens do planner) ----
+const deleteTarget = ref(null)
+const skipDeleteConfirm = ref(localStorage.getItem('rf_skipDeleteConfirm') === 'true')
+const dontShowAgain = ref(false)
+
+const requestRemove = (item) => {
+  if (skipDeleteConfirm.value) {
+    doRemove(item)
+    return
+  }
+  deleteTarget.value = item
+  dontShowAgain.value = false
+}
+
+const confirmDelete = () => {
+  if (dontShowAgain.value) {
+    skipDeleteConfirm.value = true
+    localStorage.setItem('rf_skipDeleteConfirm', 'true')
+  }
+  doRemove(deleteTarget.value)
+  deleteTarget.value = null
+}
+
+const doRemove = (item) => {
+  switch (item.plannerKind) {
+    case 'fixed': return removeFixed(item.id)
+    case 'installment': return removeInstallment(item.id)
+    case 'onetime': return removeOneTime(item.id)
+    case 'budget': return removeBudget(item.id)
+    default: return removeRenda(item.id)
+  }
+}
+
 const goalsPanelRef = ref(null)
 
 const { isOpen, title, fields, message, open, close } = useModal()
@@ -80,16 +137,16 @@ const onboardingSteps = computed(() => [
   {
     label: 'Adicione sua',
     bold: 'renda mensal',
-    hint: '— clique aqui ou no + em "Renda Mensal"',
+    hint: '— clique aqui ou no + em "Entradas"',
     done: rendas.value.length > 0,
     action: () => openAddRenda()
   },
   {
     label: 'Cadastre suas',
-    bold: 'despesas fixas',
-    hint: '(aluguel, planos, etc.)',
-    done: despesas.value.length > 0,
-    action: () => openAddDespesaFixa()
+    bold: 'contas fixas',
+    hint: '— use os campos no painel "Preciso pagar"',
+    done: hasFixed.value,
+    action: () => {}
   },
   {
     label: 'Defina uma',
@@ -99,107 +156,97 @@ const onboardingSteps = computed(() => [
     action: () => goalsPanelRef.value?.openModal()
   },
   {
-    label: 'Defina uma',
-    bold: 'meta de evolução',
-    hint: '— adicione rendas e despesas com datas para ver o gráfico',
-    done: rendas.value.some(r => r.data) || [...despesas.value, ...despesasAvulsas.value].some(d => d.data),
-    action: () => openAddRenda()
+    label: 'Planeje seus',
+    bold: 'gastos por categoria',
+    hint: '— crie categorias no painel "Planejo gastar"',
+    done: hasBudgets.value,
+    action: () => {}
   }
 ])
 
 const allStepsDone = computed(() => onboardingSteps.value.every(s => s.done))
 const showOnboarding = computed(() => !onboardingDismissed.value && !allStepsDone.value)
 
-// Sugestão dinâmica baseada nos dados do ciclo atual
+// Sugestão dinâmica baseada nos dados do ciclo selecionado (mascara valores ocultos)
+const fmtVal = (v) => (valoresOcultos.value ? 'R$ ••••' : formatCurrency(v))
+
 const aiSuggestion = computed(() => {
-  const saldoCiclo = totalRendaCiclo.value - totalDespesaCiclo.value
-  if (totalRendaCiclo.value === 0) return 'Adicione sua renda do ciclo atual para começar.'
-  const pct = totalDespesaCiclo.value / totalRendaCiclo.value
-  if (pct > 0.9) return `Suas despesas (${Math.round(pct * 100)}% da renda) estão muito altas. Revise seus gastos fixos.`
-  if (pct > 0.7) return `Despesas em ${Math.round(pct * 100)}% da renda. Tente reduzir para abaixo de 70%.`
-  if (metas.value.length === 0) return `Saldo de ${formatCurrency(saldoCiclo)} no ciclo. Que tal definir uma meta financeira?`
-  return `Saldo de ${formatCurrency(saldoCiclo)} no ciclo atual. Continue assim!`
-})
-
-const glossaryTerms = [
-  {
-    term: 'Elisão fiscal',
-    explanation: 'Planejamento permitido por lei para reduzir a carga tributária.'
-  },
-  {
-    term: 'Base de cálculo',
-    explanation: 'Valor usado como referência para calcular o imposto.'
-  },
-  {
-    term: 'Valor dedutível',
-    explanation: 'Despesa que pode diminuir a base de cálculo do imposto.'
+  if (totalRendaCiclo.value === 0) {
+    return `Nenhuma entrada em ${cycleLabel.value}. Adicione sua renda do ciclo para começar.`
   }
-]
-
-// PieChart usa dados do ciclo atual
-const pieData = computed(() => {
-  const r = totalRendaCiclo.value
-  const d = totalDespesaCiclo.value
-  if (r === 0 && d === 0) return [1, 1]
-  const saldoCiclo = Math.max(r - d, 0)
-  const despesasEfetivas = Math.min(d, r)
-
-  return [despesasEfetivas, saldoCiclo]
+  if (livre.value < 0) {
+    return `Contas e metas superam a renda em ${fmtVal(-livre.value)} neste ciclo. Reveja o que dá para cortar em "Preciso pagar".`
+  }
+  if (restam.value < 0) {
+    return `Você passou do teto de gastos em ${fmtVal(-restam.value)}. O gasto planejado de ${cycleLabel.value} soma ${fmtVal(totalGasto.value)}.`
+  }
+  if (metas.value.length === 0) {
+    return `Sobram ${fmtVal(restam.value)} do teto em ${cycleLabel.value}. Que tal guardar parte disso em uma meta financeira?`
+  }
+  return `Folga de ${fmtVal(restam.value)} no teto de ${cycleLabel.value}. Continue assim!`
 })
-const pieLabels = computed(() => ['Despesas', 'Saldo'])
+
+// ---- Evolução patrimonial: caixa acumulado por ciclo (renda − contas − gastos) ----
+const evolution = computed(() => {
+  const incomeByCycle = {}
+  for (const r of rendas.value) {
+    if (!r.data) continue
+    const i = cycleIndexOfDate(r.data)
+    incomeByCycle[i] = (incomeByCycle[i] || 0) + Number(r.valor)
+  }
+
+  const sel = selectedCycleIndex.value
+  const candidates = Object.keys(incomeByCycle).map(Number)
+  if (earliestIndex.value != null) candidates.push(earliestIndex.value)
+
+  if (!candidates.length) {
+    return { labels: [labelForCycleIndex(sel)], dados: [0] }
+  }
+
+  const trueStart = Math.min(...candidates)
+  const displayStart = Math.max(trueStart, sel - 11)
+  const labels = []
+  const dados = []
+  let cumulative = 0
+  for (let i = trueStart; i <= sel; i++) {
+    cumulative += (incomeByCycle[i] || 0) - comprometidoAt(i) - gastoAt(i)
+    if (i >= displayStart) {
+      labels.push(labelForCycleIndex(i))
+      dados.push(cumulative)
+    }
+  }
+  return { labels, dados }
+})
 
 const toggleVisibilidade = () => {
   valoresOcultos.value = !valoresOcultos.value
 }
 
 // Navegação
-const goToSimulado = () => {
-  router.push('/simulado')
-}
-
-const goToProfile = () => {
-  router.push('/perfil')
-}
-
+const goToSimulado = () => router.push('/simulado')
+const goToProfile = () => router.push('/perfil')
 const handleSignOut = async () => {
   await signOut()
   router.push('/auth')
 }
 
-// Handlers de Modal
+// ---- Modal (renda + confirmações) ----
+const modalAction = ref('')
+
 const handleConfirm = (values) => {
   const nome = (val) => (typeof val === 'string' ? val.trim() : '')
   const valor = (val) => (typeof val === 'number' && !isNaN(val) && val > 0 ? val : null)
 
   switch (modalAction.value) {
-    // case 'patrimonio':
-    //   if (typeof values[0] === 'number' && !isNaN(values[0]) && values[0] >= 0) {
-    //     const mes = new Date().toLocaleString('pt-BR', { month: 'short' })
-    //     addHistorico(mes.charAt(0).toUpperCase() + mes.slice(1, 3), values[0])
-    //   }
-    //   break
     case 'renda': {
       const n = nome(values[0]); const v = valor(values[1])
-      if (n && v) addRenda(getUniqueName(n), v, values[2] || todayISO())
-      break
-    }
-    case 'despesaFixa': {
-      const n = nome(values[0]); const v = valor(values[1])
-      if (n && v) addDespesaFixa(getUniqueName(n), v, values[2] || todayISO())
-      break
-    }
-    case 'despesaAvulsa': {
-      const n = nome(values[0]); const v = valor(values[1])
-      if (n && v) addDespesaAvulsa(getUniqueName(n), v, values[2] || todayISO())
+      if (n && v) addRenda(getUniqueName(n), v, values[2] || defaultEntryDate.value)
       break
     }
     case 'confirmClearAll':
       if ((values[0] || '').trim() !== 'EXCLUIR') return
       clearAll()
-      break
-    case 'confirmClearDespesas':
-      if ((values[0] || '').trim().toUpperCase() !== 'SIM') return
-      clearDespesas()
+      clearPlanner()
       break
     case 'confirmClearTransacoes':
       if ((values[0] || '').trim().toUpperCase() !== 'SIM') return
@@ -208,16 +255,6 @@ const handleConfirm = (values) => {
   }
   close()
 }
-
-// Ações do modal
-const modalAction = ref('')
-
-// const openEditPatrimonio = () => {
-//   modalAction.value = 'patrimonio'
-//   open('Editar Patrimônio', [
-//     { placeholder: 'Novo valor do Patrimônio', value: patrimonio.value, isCurrency: true }
-//   ])
-// }
 
 const nameWarningFn = (val) => {
   const n = (val || '').trim()
@@ -232,40 +269,14 @@ const openAddRenda = () => {
   open('Adicionar Renda', [
     { placeholder: 'Nome da origem (ex: Salário)', warningFn: nameWarningFn },
     { placeholder: 'Valor da Renda', isCurrency: true },
-    { placeholder: 'Data do recebimento', type: 'date', value: todayISO() }
+    { placeholder: 'Data do recebimento', type: 'date', value: defaultEntryDate.value }
   ])
 }
 
-const openAddDespesaFixa = () => {
-  modalAction.value = 'despesaFixa'
-  open('Nova Despesa Fixa', [
-    { placeholder: 'Nome da despesa (ex: Aluguel)', warningFn: nameWarningFn },
-    { placeholder: 'Valor da despesa', isCurrency: true },
-    { placeholder: 'Data da despesa', type: 'date', value: todayISO() }
-  ])
-}
-
-const openAddDespesaAvulsa = () => {
-  modalAction.value = 'despesaAvulsa'
-  open('Despesa Avulsa', [
-    { placeholder: 'Motivo (ex: Uber, Lanche)', warningFn: nameWarningFn },
-    { placeholder: 'Valor da despesa', isCurrency: true },
-    { placeholder: 'Data da despesa', type: 'date', value: todayISO() }
-  ])
-}
-
-// Ações de confirmação usando modal
 const confirmClearAll = () => {
   modalAction.value = 'confirmClearAll'
   open('ATENÇÃO', [
     { placeholder: 'Digite EXCLUIR para confirmar' }
-  ])
-}
-
-const confirmClearDespesas = () => {
-  modalAction.value = 'confirmClearDespesas'
-  open('Confirmar', [
-    { placeholder: 'Digite SIM para apagar todas as despesas' }
   ])
 }
 
@@ -276,7 +287,10 @@ const confirmClearTransacoes = () => {
   ])
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadPlanner()
+})
 </script>
 
 <template>
@@ -290,9 +304,9 @@ onMounted(load)
   <div class="dashboard-shell">
     <span class="particle-stream" aria-hidden="true"></span>
 
-    <div v-if="dashError" class="error-toast" @click="dashError = null">
+    <div v-if="dashError || plannerError" class="error-toast" @click="dashError = null; plannerError = null">
       <i class="fas fa-exclamation-circle"></i>
-      {{ dashError }}
+      {{ dashError || plannerError }}
       <i class="fas fa-times" style="margin-left: auto"></i>
     </div>
 
@@ -302,6 +316,13 @@ onMounted(load)
         <div class="brand-mark" aria-label="Renda Fácil">
           <span class="brand-text">Renda Fácil</span>
         </div>
+        <CycleSelector
+          :label="cycleLabel"
+          :is-current="isCurrentCycle"
+          @prev="prevCycle"
+          @next="nextCycle"
+          @reset="resetCycle"
+        />
         <div class="top-icons">
           <i
             class="far fa-eye"
@@ -344,68 +365,23 @@ onMounted(load)
         </ol>
       </div>
 
-      <section class="glossary-strip" aria-label="Glossário rápido">
-        <div class="glossary-strip__header">
-          <i class="fas fa-circle-info"></i>
-          <div>
-            <strong>Glossário rápido</strong>
-            <span>Passe o mouse ou use o teclado nos termos para ver uma explicação curta.</span>
-          </div>
-        </div>
-        <div class="glossary-strip__terms">
-          <GlossaryTerm
-            v-for="item in glossaryTerms"
-            :key="item.term"
-            :term="item.term"
-            :explanation="item.explanation"
-          />
-        </div>
-      </section>
-
-      <!-- Cards de estatísticas -->
-      <StatCards
-        :patrimonio="saldo"
-        :total-renda="totalRendaCiclo"
-        :total-despesa="totalDespesaCiclo"
-        :is-hidden="valoresOcultos"
-        :show-edit="false"
-        @add-renda="openAddRenda"
-        @add-despesa="openAddDespesaAvulsa"
-        @clear-despesas="confirmClearDespesas"
-      />
-
-      <!-- Conteúdo principal -->
+      <!-- Linha 1: Entradas · Livre para gastar · Metas -->
       <section class="main-content">
-        <PieChart :data="pieData" :labels="pieLabels" :center-value="totalRendaCiclo" />
-        
-        <IncomeDetails
+        <IncomePanel
           :rendas="rendasCiclo"
-          :despesas="despesasFixasCiclo"
+          :total="totalRendaCiclo"
           :is-hidden="valoresOcultos"
-          @add-renda="openAddRenda"
-          @add-despesa="openAddDespesaFixa"
-          @remove-renda="removeRenda"
-          @remove-despesa="removeDespesa"
-          @edit-entry="handleEditEntry"
+          @add="openAddRenda"
+          @edit="handleEditEntry"
+          @remove="requestRemove"
         />
 
-        <QuickActions
-          @add-receita="openAddRenda"
-          @add-despesa="openAddDespesaAvulsa"
-          @novo-simulado="goToSimulado"
-          @clear-all="confirmClearAll"
-        >
-          <template #ai-suggestion>
-            <AISuggestion :suggestion="aiSuggestion" />
-          </template>
-        </QuickActions>
-      </section>
-
-      <!-- Conteúdo inferior -->
-      <section class="bottom-content">
-        <EvolutionChart
-          :labels="historicoCalculado.labels"
-          :data="historicoCalculado.dados"
+        <FlowPanel
+          :renda="totalRendaCiclo"
+          :comprometido="plannerComprometido"
+          :aportes="totalAportesMetaCiclo"
+          :livre="livre"
+          :is-hidden="valoresOcultos"
         />
 
         <GoalsPanel
@@ -413,8 +389,55 @@ onMounted(load)
           :metas="metas"
           :is-hidden="valoresOcultos"
           @add-goal="(g) => addMeta(g.nome, g.alvo)"
-          @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, todayISO())"
+          @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, defaultEntryDate)"
           @remove="removeMeta"
+        />
+      </section>
+
+      <!-- Linha 2: Preciso pagar · Planejo gastar -->
+      <section class="mid-content">
+        <BillsPanel
+          :fixed="fixedCiclo"
+          :installments="installmentsCiclo"
+          :one-time="oneTimeCiclo"
+          :paid-ids="fixedPaidIds"
+          :invoice-paid="invoicePaid"
+          :total-installments="totalInstallments"
+          :total-one-time="totalOneTime"
+          :total-invoice="totalInvoice"
+          :total-contas="plannerComprometido"
+          :total-pago="totalPago"
+          :restante="plannerRestante"
+          :is-hidden="valoresOcultos"
+          @add-fixed="(p) => addFixed(p.name, p.amount, p.day)"
+          @add-installment="(p) => addInstallment(p.name, p.amount, p.parcelaAtual, p.parcelaTotal)"
+          @add-onetime="(p) => addOneTime(p.name, p.amount)"
+          @set-amount="(p) => setAmount(p.kind, p.id, p.amount)"
+          @toggle-fixed-paid="toggleFixedPaid"
+          @toggle-invoice-paid="toggleInvoicePaid"
+          @remove="requestRemove"
+        />
+
+        <SpendPanel
+          :budgets="budgetsCiclo"
+          :teto="livre"
+          :gasto="totalGasto"
+          :total-budget="totalBudget"
+          :is-hidden="valoresOcultos"
+          @add-budget="(p) => addBudget(p.name, p.limit)"
+          @launch-spend="(p) => launchSpend(p.id, p.amount)"
+          @set-limit="(p) => setBudgetLimit(p.id, p.limit)"
+          @remove="requestRemove"
+        />
+      </section>
+
+      <!-- Linha 3: Evolução · Transações · Assistente -->
+      <section class="bottom-content">
+        <EvolutionChart
+          :labels="evolution.labels"
+          :data="evolution.dados"
+          :subtitle="cycleLabel"
+          :is-hidden="valoresOcultos"
         />
 
         <TransactionsPanel
@@ -423,7 +446,21 @@ onMounted(load)
           @clear="confirmClearTransacoes"
           @remove="removeTransacao"
         />
+
+        <AssistantPanel :suggestion="aiSuggestion" @simulado="goToSimulado" />
       </section>
+
+      <!-- Rodapé de utilidades -->
+      <div class="util-row">
+        <span class="util-note">Os painéis mostram o ciclo de {{ cycleLabel }} — use as setas no topo para navegar.</span>
+        <button
+          class="btn-outline util-danger"
+          @click="confirmClearAll"
+          title="Apagar todos os dados do sistema"
+        >
+          <i class="fas fa-power-off"></i> Zerar Todo o Sistema
+        </button>
+      </div>
     </div>
   </div>
 
@@ -445,4 +482,35 @@ onMounted(load)
     @close="showEditModal = false; editTarget = null"
     @save="handleEditSave"
   />
+
+  <!-- Confirmação de exclusão -->
+  <Teleport to="body">
+    <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget = null" role="dialog" aria-modal="true">
+      <div class="glass-panel modal-content" style="width: min(380px, 95vw)">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+          <h3 class="panel-title" style="margin: 0">Confirmar exclusão</h3>
+          <button class="btn-icon-edit" @click="deleteTarget = null"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p style="color: var(--text-main); margin-bottom: 18px">
+            Deseja remover <strong>{{ deleteTarget.nome }}</strong>?
+          </p>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-soft); font-size: 0.85rem">
+            <input type="checkbox" v-model="dontShowAgain" style="width: 14px; height: 14px; cursor: pointer" />
+            Não mostrar novamente
+          </label>
+        </div>
+        <div class="modal-actions" style="margin-top: 20px">
+          <button class="btn-outline" style="padding: 10px 20px" @click="deleteTarget = null">Cancelar</button>
+          <button
+            class="btn-main-action"
+            style="padding: 10px 20px; font-size: 1rem; width: auto; background: var(--danger-soft); border-color: var(--danger-soft)"
+            @click="confirmDelete"
+          >
+            Remover
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>

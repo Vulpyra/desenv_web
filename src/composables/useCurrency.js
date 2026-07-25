@@ -15,6 +15,19 @@ export function useCurrency() {
     return parseInt(digits, 10) / 100
   }
 
+  // Interpreta entrada livre digitada pelo usuário (ex: "1.200,50", "R$ 950", "170")
+  // no padrão pt-BR: ponto = separador de milhar, vírgula = decimal.
+  const parseLoose = (valueStr) => {
+    if (valueStr === null || valueStr === undefined) return 0
+    const n = Number(
+      String(valueStr)
+        .replace(/\s|R\$/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.')
+    )
+    return isNaN(n) ? 0 : n
+  }
+
   const maskCurrency = (event) => {
     const input = event.target
     let value = input.value.replace(/\D/g, '')
@@ -26,5 +39,5 @@ export function useCurrency() {
     })
   }
 
-  return { formatCurrency, parseCurrency, maskCurrency }
+  return { formatCurrency, parseCurrency, parseLoose, maskCurrency }
 }

@@ -3,6 +3,11 @@ import { supabase } from '@/lib/supabase'
 import { useCurrency } from './useCurrency'
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+const FULL_MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+]
+const PAID_STORAGE_KEY = 'rf_contasPagas'
 
 export function useDashboardData() {
   const { formatCurrency } = useCurrency()
@@ -56,6 +61,7 @@ export function useDashboardData() {
 
   // Estado
   const patrimonio = ref(0)
+  const cycleOffset = ref(0)
   const rendas = ref([])
   const despesas = ref([])
   const despesasAvulsas = ref([])
@@ -107,7 +113,8 @@ export function useDashboardData() {
       addFlow(d.data, -Number(d.valor))
     }
 
-    const cycles = Object.keys(cycleFlow).sort()
+    // Mostra a evolução apenas até o ciclo selecionado (chaves YYYY-MM ordenam lexicograficamente)
+    const cycles = Object.keys(cycleFlow).sort().filter(c => c <= cycleKey.value)
     let cumulative = 0
     const labels = []
     const dados = []
@@ -140,47 +147,82 @@ export function useDashboardData() {
     return new Date(y, m - 1, d)
   }
 
-  const currentCycle = computed(() => {
+  const addMonthsYM = (y, m, delta) => {
+    const total = y * 12 + m + delta
+    return { y: Math.floor(total / 12), m: ((total % 12) + 12) % 12 }
+  }
+
+  // Mês/ano cujo 5º dia útil inicia o ciclo que contém a data de hoje
+  const baseCycleMonth = () => {
     const now = new Date()
     const y = now.getFullYear()
     const m = now.getMonth()
     const startThisMonth = getNthWorkday(y, m, 5)
-    if (now >= startThisMonth) {
-      const nm = m === 11 ? 0 : m + 1
-      const ny = m === 11 ? y + 1 : y
-      return { start: startThisMonth, end: getNthWorkday(ny, nm, 5) }
+    if (now >= startThisMonth) return { y, m }
+    return addMonthsYM(y, m, -1)
+  }
+
+  // Ciclo selecionado pelo usuário (offset 0 = ciclo atual)
+  const selectedCycle = computed(() => {
+    const base = baseCycleMonth()
+    const { y, m } = addMonthsYM(base.y, base.m, cycleOffset.value)
+    const next = addMonthsYM(y, m, 1)
+    return {
+      start: getNthWorkday(y, m, 5),
+      end: getNthWorkday(next.y, next.m, 5),
+      year: y,
+      month: m
     }
-    const pm = m === 0 ? 11 : m - 1
-    const py = m === 0 ? y - 1 : y
-    return { start: getNthWorkday(py, pm, 5), end: startThisMonth }
   })
 
-  const rendasCiclo = computed(() => {
-    const { start, end } = currentCycle.value
-    return rendas.value.filter(r => {
-      if (!r.data) return false
-      const d = parseEntryDate(r.data)
-      return d >= start && d < end
-    })
-  })
+  const cycleKey = computed(() =>
+    `${selectedCycle.value.year}-${String(selectedCycle.value.month + 1).padStart(2, '0')}`
+  )
 
-  const despesasFixasCiclo = computed(() => {
-    const { start, end } = currentCycle.value
-    return despesas.value.filter(d => {
-      if (!d.data) return false
-      const date = parseEntryDate(d.data)
-      return date >= start && date < end
-    })
-  })
+  const cycleLabel = computed(() =>
+    `${FULL_MONTH_NAMES[selectedCycle.value.month]} ${selectedCycle.value.year}`
+  )
 
-  const despesasAvulsasCiclo = computed(() => {
-    const { start, end } = currentCycle.value
-    return despesasAvulsas.value.filter(d => {
-      if (!d.data) return false
-      const date = parseEntryDate(d.data)
-      return date >= start && date < end
-    })
-  })
+  const isCurrentCycle = computed(() => cycleOffset.value === 0)
+
+  // Índice numérico do ciclo (ano * 12 + mês do 5º dia útil que o abre)
+  const selectedCycleIndex = computed(() =>
+    selectedCycle.value.year * 12 + selectedCycle.value.month
+  )
+
+  // Índice do ciclo que contém uma data de lançamento (para agrupar por ciclo)
+  const cycleIndexOfDate = (dateStr) => {
+    const cs = getCycleStartForDate(parseEntryDate(dateStr))
+    return cs.getFullYear() * 12 + cs.getMonth()
+  }
+
+  // Rótulo curto de um índice de ciclo (ex: "Mai/26")
+  const labelForCycleIndex = (i) => {
+    const m = ((i % 12) + 12) % 12
+    const y = Math.floor(i / 12)
+    return `${MONTH_NAMES[m]}/${String(y).slice(2)}`
+  }
+
+  const prevCycle = () => { cycleOffset.value-- }
+  const nextCycle = () => { cycleOffset.value++ }
+  const resetCycle = () => { cycleOffset.value = 0 }
+
+  const inSelectedCycle = (entry) => {
+    if (!entry.data) return false
+    const { start, end } = selectedCycle.value
+    const date = parseEntryDate(entry.data)
+    return date >= start && date < end
+  }
+
+  const rendasCiclo = computed(() => rendas.value.filter(inSelectedCycle))
+
+  const despesasFixasCiclo = computed(() => despesas.value.filter(inSelectedCycle))
+
+  const despesasAvulsasCiclo = computed(() => despesasAvulsas.value.filter(inSelectedCycle))
+
+  // Contas fixas do ciclo, separadas dos aportes em metas (despesas com meta_id)
+  const contasFixasCiclo = computed(() => despesasFixasCiclo.value.filter(d => !d.meta_id))
+  const aportesMetaCiclo = computed(() => despesasFixasCiclo.value.filter(d => d.meta_id))
 
   const totalRendaCiclo = computed(() =>
     rendasCiclo.value.reduce((sum, r) => sum + Number(r.valor), 0)
@@ -190,6 +232,65 @@ export function useDashboardData() {
     despesasFixasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0) +
     despesasAvulsasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0)
   )
+
+  const totalContasFixasCiclo = computed(() =>
+    contasFixasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0)
+  )
+
+  const totalAportesMetaCiclo = computed(() =>
+    aportesMetaCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0)
+  )
+
+  const totalAvulsasCiclo = computed(() =>
+    despesasAvulsasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0)
+  )
+
+  // Livre para gastar = renda − contas fixas − aportes em metas
+  const livreCiclo = computed(() =>
+    totalRendaCiclo.value - totalContasFixasCiclo.value - totalAportesMetaCiclo.value
+  )
+
+  // O que resta do teto depois dos gastos avulsos do ciclo
+  const restamCiclo = computed(() => livreCiclo.value - totalAvulsasCiclo.value)
+
+  // Contas pagas: estado local por ciclo (não há coluna no banco)
+  const loadPaidStore = () => {
+    try {
+      return JSON.parse(localStorage.getItem(PAID_STORAGE_KEY)) || {}
+    } catch {
+      return {}
+    }
+  }
+
+  const paidStore = ref(loadPaidStore())
+
+  const paidIdsCiclo = computed(() => paidStore.value[cycleKey.value] || [])
+
+  const togglePaga = (id) => {
+    const key = cycleKey.value
+    const current = new Set(paidStore.value[key] || [])
+    if (current.has(id)) current.delete(id)
+    else current.add(id)
+    paidStore.value = { ...paidStore.value, [key]: [...current] }
+    try {
+      localStorage.setItem(PAID_STORAGE_KEY, JSON.stringify(paidStore.value))
+    } catch { /* armazenamento indisponível: estado segue apenas em memória */ }
+  }
+
+  const clearPaidStore = () => {
+    paidStore.value = {}
+    try {
+      localStorage.removeItem(PAID_STORAGE_KEY)
+    } catch { /* armazenamento indisponível */ }
+  }
+
+  const totalPagoCiclo = computed(() =>
+    contasFixasCiclo.value
+      .filter(d => paidIdsCiclo.value.includes(d.id))
+      .reduce((sum, d) => sum + Number(d.valor), 0)
+  )
+
+  const restanteAPagarCiclo = computed(() => totalContasFixasCiclo.value - totalPagoCiclo.value)
 
   // Carregar todos os dados do usuário autenticado
   const load = async () => {
@@ -445,6 +546,19 @@ export function useDashboardData() {
   }
 
   const removeMeta = async (id) => {
+    // Remove os aportes (despesas com meta_id) antes de apagar a meta, senão eles
+    // ficariam órfãos reduzindo o "livre" do ciclo sem aparecer em lugar nenhum.
+    const aportes = despesas.value.filter(d => d.meta_id === id)
+    if (aportes.length) {
+      const aporteIds = aportes.map(d => d.id)
+      await supabase.from('despesas').delete().in('id', aporteIds)
+      await supabase.from('transacoes').delete().in('ref_id', aporteIds).eq('tipo', 'despesa')
+      despesas.value = despesas.value.filter(d => d.meta_id !== id)
+      transacoes.value = transacoes.value.filter(
+        t => !(t.tipo === 'despesa' && aporteIds.includes(t.refId))
+      )
+    }
+
     const { error: err } = await supabase.from('metas').delete().eq('id', id)
     if (err) { error.value = err.message; return }
     metas.value = metas.value.filter(m => m.id !== id)
@@ -462,6 +576,7 @@ export function useDashboardData() {
     await supabase.from('despesas').delete().eq('usuario_id', user.id)
     despesas.value = []
     despesasAvulsas.value = []
+    clearPaidStore()
     if (metas.value.some(m => m.atual > 0)) {
       await supabase.from('metas').update({ valor_atual: 0 }).eq('usuario_id', user.id)
       metas.value.forEach(m => { m.atual = 0 })
@@ -503,6 +618,7 @@ export function useDashboardData() {
     metas.value = []
     historico.value = { labels: [], dados: [] }
     transacoes.value = []
+    clearPaidStore()
   }
 
   return {
@@ -523,8 +639,32 @@ export function useDashboardData() {
     historicoCalculado,
     rendasCiclo,
     despesasFixasCiclo,
+    despesasAvulsasCiclo,
+    contasFixasCiclo,
+    aportesMetaCiclo,
     totalRendaCiclo,
     totalDespesaCiclo,
+    totalContasFixasCiclo,
+    totalAportesMetaCiclo,
+    totalAvulsasCiclo,
+    livreCiclo,
+    restamCiclo,
+    // Ciclo selecionável
+    cycleOffset,
+    selectedCycle,
+    selectedCycleIndex,
+    cycleIndexOfDate,
+    labelForCycleIndex,
+    cycleLabel,
+    isCurrentCycle,
+    prevCycle,
+    nextCycle,
+    resetCycle,
+    // Contas pagas
+    paidIdsCiclo,
+    togglePaga,
+    totalPagoCiclo,
+    restanteAPagarCiclo,
     // Métodos
     load,
     addRenda,

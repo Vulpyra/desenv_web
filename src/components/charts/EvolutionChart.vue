@@ -1,16 +1,26 @@
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
 import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 
 const props = defineProps({
   labels: Array,
-  data: Array
+  data: Array,
+  subtitle: String,
+  isHidden: Boolean
 })
 
-const emit = defineEmits([])
-
 const { formatCurrency } = useCurrency()
+
+const patrimonioAtual = computed(() =>
+  props.data && props.data.length ? props.data[props.data.length - 1] : null
+)
+
+const delta = computed(() =>
+  props.data && props.data.length > 1
+    ? props.data[props.data.length - 1] - props.data[props.data.length - 2]
+    : null
+)
 const canvasRef = ref(null)
 let chartInstance = null
 
@@ -111,8 +121,22 @@ onUnmounted(() => {
     <div class="panel-header">
       <GlossaryTerm
         term="Evolução Patrimonial"
-        explanation="Acompanhe como seu patrimônio muda ao longo dos meses."
+        explanation="Acompanhe como seu patrimônio muda ao longo dos ciclos, até o ciclo selecionado."
       />
+      <span
+        v-if="delta !== null"
+        class="evolution-delta hide-value"
+        :class="{ 'value-hidden': isHidden }"
+        :style="{ color: delta >= 0 ? 'var(--accent-cyan)' : 'var(--danger-soft)' }"
+      >
+        {{ delta >= 0 ? '+' : '−' }} {{ formatCurrency(Math.abs(delta)) }}
+      </span>
+    </div>
+    <div v-if="patrimonioAtual !== null" style="margin-bottom: 14px">
+      <div class="big-number hide-value" :class="{ 'value-hidden': isHidden }">
+        {{ formatCurrency(patrimonioAtual) }}
+      </div>
+      <p class="panel-hint">acumulado até {{ subtitle || 'o ciclo atual' }}</p>
     </div>
     <div class="chart-container" style="position: relative; height: 250px; width: 100%">
       <canvas ref="canvasRef"></canvas>
