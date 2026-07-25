@@ -41,7 +41,7 @@ create table if not exists public.preferencias (
 -- ============================================================================
 --  2. FINANCE TABLES
 -- ============================================================================
-
+create extension if not exists pgcrypto;
 -- Metas financeiras (goals). Created before "despesas" because despesas.meta_id
 -- references it.
 create table if not exists public.metas (
