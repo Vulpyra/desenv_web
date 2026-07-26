@@ -52,8 +52,13 @@ const fmtDia = (data) => {
         <div>
           <i class="fas" :class="item.icone" :style="{ color: item.cor || 'var(--accent-cyan)' }"></i>
           <div class="entry-text">
-            <span>{{ item.nome }}</span>
-            <span class="item-sub">{{ fmtDia(item.data) }}</span>
+            <span>
+              {{ item.nome }}
+              <span v-if="item.recorrente" class="recur-badge" title="Renda recorrente — repete todo ciclo">
+                <i class="fas fa-rotate"></i> recorrente
+              </span>
+            </span>
+            <span class="item-sub">{{ fmtDia(item.dataDisplay || item.data) }}</span>
           </div>
         </div>
         <div>

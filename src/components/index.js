@@ -18,6 +18,7 @@ export { default as FlowPanel } from './dashboard/FlowPanel.vue'
 export { default as BillsPanel } from './dashboard/BillsPanel.vue'
 export { default as SpendPanel } from './dashboard/SpendPanel.vue'
 export { default as AssistantPanel } from './dashboard/AssistantPanel.vue'
+export { default as DashboardPanel } from './dashboard/DashboardPanel.vue'
 
 // Charts
 export { default as PieChart } from './charts/PieChart.vue'

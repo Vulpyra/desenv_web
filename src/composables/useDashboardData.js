@@ -190,11 +190,18 @@ export function useDashboardData() {
     selectedCycle.value.year * 12 + selectedCycle.value.month
   )
 
-  // Índice do ciclo que contém uma data de lançamento (para agrupar por ciclo)
-  const cycleIndexOfDate = (dateStr) => {
-    const cs = getCycleStartForDate(parseEntryDate(dateStr))
+  // Índice do ciclo que contém uma data/instante. Aceita Date, 'YYYY-MM-DD'
+  // (interpretado no fuso local) ou um timestamp ISO (ex: criado_em).
+  const cycleIndexOf = (input) => {
+    let d
+    if (input instanceof Date) d = input
+    else if (/^\d{4}-\d{2}-\d{2}$/.test(String(input))) d = parseEntryDate(input)
+    else d = new Date(input)
+    const cs = getCycleStartForDate(d)
     return cs.getFullYear() * 12 + cs.getMonth()
   }
+  // Compatibilidade: agrupamento por data de lançamento
+  const cycleIndexOfDate = (dateStr) => cycleIndexOf(dateStr)
 
   // Rótulo curto de um índice de ciclo (ex: "Mai/26")
   const labelForCycleIndex = (i) => {
@@ -207,26 +214,62 @@ export function useDashboardData() {
   const nextCycle = () => { cycleOffset.value++ }
   const resetCycle = () => { cycleOffset.value = 0 }
 
-  const inSelectedCycle = (entry) => {
-    if (!entry.data) return false
-    const { start, end } = selectedCycle.value
-    const date = parseEntryDate(entry.data)
-    return date >= start && date < end
+  // Ciclo "casa" de uma entrada: definido por quando foi DECLARADA (ciclo_inicio)
+  const rendaStartCycle = (r) =>
+    r.ciclo_inicio != null ? r.ciclo_inicio : cycleIndexOf(r.criado_em || r.data)
+
+  // Uma renda aparece no ciclo i se: (recorrente) do início até o fim; (única) só no início.
+  const rendaActiveInCycle = (r, i) => {
+    const start = rendaStartCycle(r)
+    if (r.recorrente) return start <= i && (r.ciclo_fim == null || i <= r.ciclo_fim)
+    return start === i
   }
 
-  const rendasCiclo = computed(() => rendas.value.filter(inSelectedCycle))
+  // Data de ocorrência de uma renda recorrente no ciclo i: mesmo dia do mês da
+  // data original, mas no mês/ano do ciclo visualizado (03/07 → 03/08 em agosto).
+  const rendaOccurrenceData = (r, i) => {
+    if (!r.recorrente || !r.data) return r.data
+    const day = Number(String(r.data).split('-')[2]) || 1
+    const m = ((i % 12) + 12) % 12
+    const y = Math.floor(i / 12)
+    const diasNoMes = new Date(y, m + 1, 0).getDate()
+    const dd = Math.min(day, diasNoMes)
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+  }
 
-  const despesasFixasCiclo = computed(() => despesas.value.filter(inSelectedCycle))
+  const rendasCiclo = computed(() =>
+    rendas.value
+      .filter(r => rendaActiveInCycle(r, selectedCycleIndex.value))
+      .map(r => (r.recorrente
+        ? { ...r, dataDisplay: rendaOccurrenceData(r, selectedCycleIndex.value) }
+        : r))
+  )
 
-  const despesasAvulsasCiclo = computed(() => despesasAvulsas.value.filter(inSelectedCycle))
+  // Total de renda de um ciclo arbitrário (para a evolução patrimonial)
+  const rendaTotalAt = (i) =>
+    rendas.value
+      .filter(r => rendaActiveInCycle(r, i))
+      .reduce((sum, r) => sum + Number(r.valor), 0)
+
+  // Menor ciclo com alguma renda (para o intervalo da evolução)
+  const earliestRendaCycle = computed(() => {
+    if (!rendas.value.length) return null
+    return Math.min(...rendas.value.map(rendaStartCycle))
+  })
+
+  // Despesas (aportes em metas): também por declaração (criado_em)
+  const despesaInSelectedCycle = (d) =>
+    cycleIndexOf(d.criado_em || d.data) === selectedCycleIndex.value
+
+  const despesasFixasCiclo = computed(() => despesas.value.filter(despesaInSelectedCycle))
+
+  const despesasAvulsasCiclo = computed(() => despesasAvulsas.value.filter(despesaInSelectedCycle))
 
   // Contas fixas do ciclo, separadas dos aportes em metas (despesas com meta_id)
   const contasFixasCiclo = computed(() => despesasFixasCiclo.value.filter(d => !d.meta_id))
   const aportesMetaCiclo = computed(() => despesasFixasCiclo.value.filter(d => d.meta_id))
 
-  const totalRendaCiclo = computed(() =>
-    rendasCiclo.value.reduce((sum, r) => sum + Number(r.valor), 0)
-  )
+  const totalRendaCiclo = computed(() => rendaTotalAt(selectedCycleIndex.value))
 
   const totalDespesaCiclo = computed(() =>
     despesasFixasCiclo.value.reduce((sum, d) => sum + Number(d.valor), 0) +
@@ -341,13 +384,20 @@ export function useDashboardData() {
   }
 
   // Ações
-  const addRenda = async (nome, valor, data_lancamento) => {
+  const addRenda = async (nome, valor, data_lancamento, recorrente = false) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    // Ciclo de declaração = o ciclo que está sendo visualizado ao criar a entrada
+    const cicloInicio = selectedCycleIndex.value
+
     const { data, error: err } = await supabase
       .from('rendas')
-      .insert({ usuario_id: user.id, nome, valor, data: data_lancamento, icone: 'fa-money-bill-wave', cor: 'var(--accent-cyan)' })
+      .insert({
+        usuario_id: user.id, nome, valor, data: data_lancamento,
+        recorrente, ciclo_inicio: cicloInicio, ciclo_fim: null,
+        icone: 'fa-money-bill-wave', cor: 'var(--accent-cyan)'
+      })
       .select()
       .single()
 
@@ -480,8 +530,15 @@ export function useDashboardData() {
   }
 
   // Nomes únicos
+  // Nome único considerando APENAS o ciclo visualizado — um "Salário" do mês
+  // passado (fora do ciclo atual) não deve renomear um novo "Salário" de hoje.
   const getUniqueName = (name, excludeId = null) => {
-    const existing = [...rendas.value, ...despesas.value, ...despesasAvulsas.value]
+    const i = selectedCycleIndex.value
+    const existing = [
+      ...rendas.value.filter(r => rendaActiveInCycle(r, i)),
+      ...despesas.value.filter(despesaInSelectedCycle),
+      ...despesasAvulsas.value.filter(despesaInSelectedCycle)
+    ]
       .filter(e => e.id !== excludeId)
       .map(e => e.nome.toLowerCase())
     if (!existing.includes(name.toLowerCase())) return name
@@ -517,6 +574,18 @@ export function useDashboardData() {
 
   // Remover
   const removeRenda = async (id) => {
+    const item = rendas.value.find(r => r.id === id)
+    const i = selectedCycleIndex.value
+
+    // Renda recorrente removida num ciclo posterior ao início: apenas para de
+    // recorrer daqui pra frente (mantém os ciclos passados), como as contas fixas.
+    if (item && item.recorrente && rendaStartCycle(item) < i) {
+      const { error: err } = await supabase.from('rendas').update({ ciclo_fim: i - 1 }).eq('id', id)
+      if (err) { error.value = err.message; return }
+      item.ciclo_fim = i - 1
+      return
+    }
+
     const { error: err } = await supabase.from('rendas').delete().eq('id', id)
     if (err) { error.value = err.message; return }
     rendas.value = rendas.value.filter(r => r.id !== id)
@@ -654,7 +723,10 @@ export function useDashboardData() {
     selectedCycle,
     selectedCycleIndex,
     cycleIndexOfDate,
+    cycleIndexOf,
     labelForCycleIndex,
+    rendaTotalAt,
+    earliestRendaCycle,
     cycleLabel,
     isCurrentCycle,
     prevCycle,

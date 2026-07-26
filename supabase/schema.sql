@@ -56,16 +56,24 @@ create table if not exists public.metas (
   criado_em   timestamptz not null default now()
 );
 
--- Rendas (income entries)
+-- Rendas (income entries).
+--  * `data` is the deposit date (informational only).
+--  * cycle membership is by DECLARATION: `ciclo_inicio` = the cycle index the
+--    user was viewing when the entry was created (year*12 + month).
+--  * `recorrente` income repeats every cycle from `ciclo_inicio` until `ciclo_fim`
+--    (null = no end).
 create table if not exists public.rendas (
-  id         uuid primary key default gen_random_uuid(),
-  usuario_id uuid not null references auth.users(id) on delete cascade,
-  nome       text not null,
-  valor      numeric(12,2) not null default 0,
-  data       date,
-  icone      text,
-  cor        text,
-  criado_em  timestamptz not null default now()
+  id           uuid primary key default gen_random_uuid(),
+  usuario_id   uuid not null references auth.users(id) on delete cascade,
+  nome         text not null,
+  valor        numeric(12,2) not null default 0,
+  data         date,
+  recorrente   boolean not null default false,
+  ciclo_inicio integer,
+  ciclo_fim    integer,
+  icone        text,
+  cor          text,
+  criado_em    timestamptz not null default now()
 );
 
 -- Despesas (expenses). is_fixa distinguishes fixed vs one-off; meta_id links an
