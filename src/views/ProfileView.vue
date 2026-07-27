@@ -22,9 +22,9 @@ const handleSignOut = async () => {
 }
 
 const handleSave = async () => {
-  commitPalette() // persiste a paleta escolhida (localStorage) só ao salvar
   const result = await saveAll()
   if (result.success) {
+    commitPalette() // persiste a paleta escolhida (localStorage) só ao salvar
     alert('Perfil salvo com sucesso!')
   } else {
     alert('Erro ao salvar: ' + result.error)
