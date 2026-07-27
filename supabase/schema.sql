@@ -59,7 +59,7 @@ create table if not exists public.metas (
 -- Rendas (income entries).
 --  * `data` is the deposit date (informational only).
 --  * cycle membership is by DECLARATION: `ciclo_inicio` = the cycle index the
---    user was viewing when the entry was created (year*12 + month).
+--    user was viewing when the entry was created (year*12 + zero-based month [0-11]).
 --  * `recorrente` income repeats every cycle from `ciclo_inicio` until `ciclo_fim`
 --    (null = no end).
 create table if not exists public.rendas (
