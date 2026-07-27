@@ -1,14 +1,25 @@
 /* ========================================
    BASE.CSS - Reset, variáveis e tipografia base
+   ----------------------------------------
+   O :root abaixo é a PALETA PADRÃO (Oceano). O useTheme sobrescreve estas
+   variáveis inline em <html> ao trocar de paleta (ver src/config/palettes.js).
    ======================================== */
 
 :root {
+  /* Sementes RGB (para compor cores com alpha via rgba(var(--x), a)) */
+  --rgb-surface: 38, 67, 120;
+  --rgb-surface-deep: 10, 22, 52;
+  --rgb-border: 130, 185, 230;
+  --rgb-border-soft: 184, 212, 245;
+  --rgb-accent: 113, 194, 217;
+  --rgb-brand: 95, 145, 204;
+  --rgb-glow: 116, 166, 223;
+  --rgb-danger: 255, 133, 153;
+
+  /* Cores semânticas */
   --bg-deep: #040b1d;
   --bg-mid: #10213f;
   --bg-end: #07122f;
-  --glass-surface: rgba(17, 32, 64, 0.44);
-  --glass-soft: rgba(104, 156, 214, 0.09);
-  --glass-border: rgba(184, 212, 245, 0.2);
   --text-main: #d4e0f2;
   --text-soft: #97abc7;
   --text-title: #f4f9ff;
@@ -20,6 +31,11 @@
   --chart-b: #71c2d9;
   --button-a: #6b99d1;
   --button-b: #7fb9d0;
+
+  /* Derivadas das sementes (não precisam ser trocadas por paleta) */
+  --glass-surface: rgba(var(--rgb-surface-deep), 0.44);
+  --glass-soft: rgba(var(--rgb-brand), 0.09);
+  --glass-border: rgba(var(--rgb-border-soft), 0.2);
 }
 
 * {
@@ -31,8 +47,8 @@
 
 body {
   background:
-    radial-gradient(circle at 10% 15%, rgba(77, 131, 208, 0.17), transparent 32%),
-    radial-gradient(circle at 85% 20%, rgba(102, 183, 223, 0.12), transparent 36%),
+    radial-gradient(circle at 10% 15%, rgba(var(--rgb-glow), 0.17), transparent 32%),
+    radial-gradient(circle at 85% 20%, rgba(var(--rgb-glow), 0.12), transparent 36%),
     linear-gradient(130deg, var(--bg-deep), var(--bg-mid) 48%, var(--bg-end) 100%);
   display: flex;
   justify-content: center;

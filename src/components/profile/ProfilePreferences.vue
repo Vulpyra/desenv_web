@@ -1,4 +1,7 @@
 <script setup>
+import { ref } from 'vue'
+import { useTheme } from '@/composables/useTheme'
+
 defineProps({
   preferences: {
     type: Object,
@@ -6,7 +9,10 @@ defineProps({
   }
 })
 
-defineEmits(['update:currency', 'update:theme', 'update:notifications', 'update:hideValues'])
+defineEmits(['update:currency', 'update:notifications', 'update:hideValues'])
+
+const { palettes, activeId, previewPalette } = useTheme()
+const themesOpen = ref(false)
 </script>
 
 <template>
@@ -26,16 +32,44 @@ defineEmits(['update:currency', 'update:theme', 'update:notifications', 'update:
         </select>
       </div>
 
-      <div class="preference-item">
-        <span>Tema</span>
-        <select
-          :value="preferences.tema"
-          class="pref-select"
-          @change="$emit('update:theme', $event.target.value)"
+      <!-- Temas: lista expansível de paletas de cores -->
+      <div class="preference-item preference-item--stack">
+        <button
+          class="themes-toggle"
+          type="button"
+          :aria-expanded="themesOpen"
+          @click="themesOpen = !themesOpen"
         >
-          <option value="dark">Escuro</option>
-          <option value="light">Claro</option>
-        </select>
+          <span>Temas</span>
+          <i class="fas" :class="themesOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </button>
+
+        <ul v-show="themesOpen" class="themes-list">
+          <li
+            v-for="p in palettes"
+            :key="p.id"
+            class="theme-row"
+            :class="{ 'theme-row--active': p.id === activeId }"
+            role="button"
+            tabindex="0"
+            @click="previewPalette(p.id)"
+            @keydown.enter.prevent="previewPalette(p.id)"
+            @keydown.space.prevent="previewPalette(p.id)"
+          >
+            <span class="theme-radio" aria-hidden="true">
+              <span v-if="p.id === activeId" class="theme-radio-dot"></span>
+            </span>
+            <span class="theme-swatch" aria-hidden="true">
+              <span
+                v-for="(c, i) in p.swatch"
+                :key="i"
+                class="theme-swatch-dot"
+                :style="{ background: c }"
+              ></span>
+            </span>
+            <span class="theme-name">{{ p.name }}</span>
+          </li>
+        </ul>
       </div>
 
       <div class="preference-item">

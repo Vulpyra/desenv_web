@@ -13,6 +13,7 @@ const { maskCurrency, parseCurrency, formatCurrency } = useCurrency()
 
 const novoNome = ref('')
 const novoAlvoRaw = ref('')
+const valorInicial = ref('')
 const investValues = ref({})
 
 watch(() => props.isOpen, (open) => {
@@ -28,6 +29,11 @@ const handleAlvoInput = (e) => {
   novoAlvoRaw.value = e.target.value
 }
 
+const handleInicialInput = (e) => {
+  maskCurrency(e)
+  valorInicial.value = e.target.value
+}
+
 const handleInvestInput = (e, metaId) => {
   maskCurrency(e)
   investValues.value[metaId] = e.target.value
@@ -36,8 +42,9 @@ const handleInvestInput = (e, metaId) => {
 const handleAddGoal = () => {
   const nome = novoNome.value.trim()
   const alvo = parseCurrency(novoAlvoRaw.value)
+  const inicial = parseCurrency(valorInicial.value) ?? 0
   if (!nome || !alvo) return
-  emit('add-goal', { nome, alvo })
+  emit('add-goal', { nome, alvo, inicial })
   novoNome.value = ''
   novoAlvoRaw.value = ''
 }
@@ -78,6 +85,13 @@ const close = () => emit('close')
             placeholder="Valor alvo (ex: R$ 1.000,00)"
             class="modal-input"
             @input="handleAlvoInput"
+            @keyup.enter="handleAddGoal"
+          />
+          <input
+            :value="valorInicial"
+            placeholder="Valor já investido (ex: R$ 500,00)"
+            class="modal-input"
+            @input="handleInicialInput"
             @keyup.enter="handleAddGoal"
           />
           <button class="btn-main-action goal-create-btn" @click="handleAddGoal">

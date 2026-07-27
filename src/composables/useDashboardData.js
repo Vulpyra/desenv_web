@@ -454,7 +454,7 @@ export function useDashboardData() {
     if (transacoes.value.length > 50) transacoes.value.pop()
   }
 
-  const addMeta = async (nome, alvo) => {
+  const addMeta = async (nome, alvo, inicial) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -473,7 +473,7 @@ export function useDashboardData() {
       .single()
 
     if (err) { error.value = err.message; return }
-    metas.value.push({ ...data, alvo: data.valor_alvo, atual: 0 })
+    metas.value.push({ ...data, alvo: data.valor_alvo, atual: inicial })
   }
 
   const addDespesaMeta = async (metaId, metaNome, valor, data_lancamento) => {

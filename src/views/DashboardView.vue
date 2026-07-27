@@ -427,7 +427,7 @@ onMounted(() => {
             ref="goalsPanelRef"
             :metas="metas"
             :is-hidden="valoresOcultos"
-            @add-goal="(g) => addMeta(g.nome, g.alvo)"
+            @add-goal="(g) => addMeta(g.nome, g.alvo, g.inicial)"
             @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, defaultEntryDate)"
             @remove="removeMeta"
           />
