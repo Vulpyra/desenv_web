@@ -1,15 +1,20 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ProfileHeader, ProfileInfoCard, ProfilePreferences, ProfileActions } from '@/components'
 import { useProfile } from '@/composables'
 import { useAuth } from '@/composables/useAuth'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const { signOut } = useAuth()
 const { profile, preferences, isLoading, load, saveAll, deleteAccount, updatePreferences } = useProfile()
+const { commitPalette, revertPalette } = useTheme()
 
 onMounted(load)
+
+// Ao sair da página de preferências sem salvar, descarta o preview do tema
+onBeforeUnmount(revertPalette)
 
 const handleSignOut = async () => {
   await signOut()
@@ -19,6 +24,7 @@ const handleSignOut = async () => {
 const handleSave = async () => {
   const result = await saveAll()
   if (result.success) {
+    commitPalette() // persiste a paleta escolhida (localStorage) só ao salvar
     alert('Perfil salvo com sucesso!')
   } else {
     alert('Erro ao salvar: ' + result.error)
@@ -65,7 +71,6 @@ const handleChangePhoto = () => {
         <ProfilePreferences
           :preferences="preferences"
           @update:currency="updatePreferences({ moeda: $event })"
-          @update:theme="updatePreferences({ tema: $event })"
           @update:notifications="updatePreferences({ notificacoes: $event })"
           @update:hideValues="updatePreferences({ ocultar_valores: $event })"
         />

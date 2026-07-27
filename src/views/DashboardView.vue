@@ -3,11 +3,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardData } from '@/composables/useDashboardData'
 import { usePlanner } from '@/composables/usePlanner'
+import { usePanelLayout } from '@/composables/usePanelLayout'
 import { useModal } from '@/composables/useModal'
 import { useCurrency } from '@/composables/useCurrency'
 import { useAuth } from '@/composables/useAuth'
 
 // Componentes
+import DashboardPanel from '@/components/dashboard/DashboardPanel.vue'
 import CycleSelector from '@/components/dashboard/CycleSelector.vue'
 import IncomePanel from '@/components/dashboard/IncomePanel.vue'
 import FlowPanel from '@/components/dashboard/FlowPanel.vue'
@@ -26,9 +28,9 @@ const { signOut } = useAuth()
 // Estado (Supabase): entradas, metas, transações, evolução
 const { formatCurrency } = useCurrency()
 const {
-  rendas, despesas, despesasAvulsas, metas, transacoes,
+  rendas, metas, transacoes,
   rendasCiclo, totalRendaCiclo, totalAportesMetaCiclo,
-  selectedCycle, selectedCycleIndex, cycleIndexOfDate, labelForCycleIndex,
+  selectedCycle, selectedCycleIndex, labelForCycleIndex, rendaTotalAt, earliestRendaCycle,
   cycleLabel, isCurrentCycle, prevCycle, nextCycle, resetCycle,
   error: dashError,
   load, addRenda, addMeta, addDespesaMeta,
@@ -53,6 +55,26 @@ const {
 const livre = computed(() => totalRendaCiclo.value - plannerComprometido.value - totalAportesMetaCiclo.value)
 const restam = computed(() => livre.value - totalGasto.value)
 
+// ---- Layout: ordem/minimização/arraste dos painéis ----
+const DEFAULT_PANELS = ['income', 'flow', 'goals', 'bills', 'spend', 'evolution', 'transactions', 'assistant']
+const panelTitles = {
+  income: 'Entradas', flow: 'Livre para gastar', goals: 'Metas Financeiras',
+  bills: 'Preciso pagar', spend: 'Planejo gastar', evolution: 'Evolução Patrimonial',
+  transactions: 'Transações', assistant: 'Assistente'
+}
+const panelSpanClass = {
+  income: 'span-2', flow: 'span-2', goals: 'span-2',
+  bills: 'span-3', spend: 'span-3',
+  evolution: 'span-2', transactions: 'span-2', assistant: 'span-2'
+}
+const { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown } = usePanelLayout(DEFAULT_PANELS)
+const previewStyle = computed(() => ({
+  left: (preview.value.x - preview.value.ox) + 'px',
+  top: (preview.value.y - preview.value.oy) + 'px',
+  width: preview.value.w + 'px',
+  height: preview.value.h + 'px'
+}))
+
 // Datas: novos lançamentos caem no ciclo que está sendo visualizado
 const toLocalISO = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -66,11 +88,8 @@ const editTarget = ref(null)
 const showEditModal = ref(false)
 const allNamesExcludingEdit = computed(() => {
   const excludeId = editTarget.value?.id
-  return [
-    ...rendas.value.filter(r => r.id !== excludeId).map(r => r.nome),
-    ...despesas.value.filter(d => d.id !== excludeId).map(d => d.nome),
-    ...despesasAvulsas.value.filter(d => d.id !== excludeId).map(d => d.nome)
-  ]
+  // Nomes do ciclo visualizado (mesma regra do getUniqueName)
+  return rendasCiclo.value.filter(r => r.id !== excludeId).map(r => r.nome)
 })
 
 const handleEditEntry = (item) => {
@@ -153,7 +172,10 @@ const onboardingSteps = computed(() => [
     bold: 'meta financeira',
     hint: '— clique em + em "Metas Financeiras"',
     done: metas.value.length > 0,
-    action: () => goalsPanelRef.value?.openModal()
+    action: () => {
+      const gp = goalsPanelRef.value
+      ;(Array.isArray(gp) ? gp[0] : gp)?.openModal()
+    }
   },
   {
     label: 'Planeje seus',
@@ -188,15 +210,9 @@ const aiSuggestion = computed(() => {
 
 // ---- Evolução patrimonial: caixa acumulado por ciclo (renda − contas − gastos) ----
 const evolution = computed(() => {
-  const incomeByCycle = {}
-  for (const r of rendas.value) {
-    if (!r.data) continue
-    const i = cycleIndexOfDate(r.data)
-    incomeByCycle[i] = (incomeByCycle[i] || 0) + Number(r.valor)
-  }
-
   const sel = selectedCycleIndex.value
-  const candidates = Object.keys(incomeByCycle).map(Number)
+  const candidates = []
+  if (earliestRendaCycle.value != null) candidates.push(earliestRendaCycle.value)
   if (earliestIndex.value != null) candidates.push(earliestIndex.value)
 
   if (!candidates.length) {
@@ -209,7 +225,7 @@ const evolution = computed(() => {
   const dados = []
   let cumulative = 0
   for (let i = trueStart; i <= sel; i++) {
-    cumulative += (incomeByCycle[i] || 0) - comprometidoAt(i) - gastoAt(i)
+    cumulative += rendaTotalAt(i) - comprometidoAt(i) - gastoAt(i)
     if (i >= displayStart) {
       labels.push(labelForCycleIndex(i))
       dados.push(cumulative)
@@ -240,7 +256,8 @@ const handleConfirm = (values) => {
   switch (modalAction.value) {
     case 'renda': {
       const n = nome(values[0]); const v = valor(values[1])
-      if (n && v) addRenda(getUniqueName(n), v, values[2] || defaultEntryDate.value)
+      const recorrente = values[3] === 'recorrente'
+      if (n && v) addRenda(getUniqueName(n), v, values[2] || defaultEntryDate.value, recorrente)
       break
     }
     case 'confirmClearAll':
@@ -269,7 +286,15 @@ const openAddRenda = () => {
   open('Adicionar Renda', [
     { placeholder: 'Nome da origem (ex: Salário)', warningFn: nameWarningFn },
     { placeholder: 'Valor da Renda', isCurrency: true },
-    { placeholder: 'Data do recebimento', type: 'date', value: defaultEntryDate.value }
+    { placeholder: 'Data do recebimento', type: 'date', value: defaultEntryDate.value },
+    {
+      placeholder: 'Tipo',
+      options: [
+        { label: 'Única (só este ciclo)', value: 'unica' },
+        { label: 'Recorrente (todo ciclo)', value: 'recorrente' }
+      ],
+      value: 'unica'
+    }
   ])
 }
 
@@ -365,94 +390,113 @@ onMounted(() => {
         </ol>
       </div>
 
-      <!-- Linha 1: Entradas · Livre para gastar · Metas -->
-      <section class="main-content">
-        <IncomePanel
-          :rendas="rendasCiclo"
-          :total="totalRendaCiclo"
-          :is-hidden="valoresOcultos"
-          @add="openAddRenda"
-          @edit="handleEditEntry"
-          @remove="requestRemove"
-        />
+      <!-- Painéis reordenáveis / minimizáveis -->
+      <TransitionGroup tag="div" class="panel-grid" name="dpanel">
+        <DashboardPanel
+          v-for="id in order"
+          :key="id"
+          :id="id"
+          :title="panelTitles[id]"
+          :minimized="isMinimized(id)"
+          :is-dragging="dragId === id"
+          :class="panelSpanClass[id]"
+          @toggle="toggleMinimize(id)"
+          @handledown="onHandleDown($event, id, panelTitles[id])"
+        >
+          <IncomePanel
+            v-if="id === 'income'"
+            :rendas="rendasCiclo"
+            :total="totalRendaCiclo"
+            :is-hidden="valoresOcultos"
+            @add="openAddRenda"
+            @edit="handleEditEntry"
+            @remove="requestRemove"
+          />
 
-        <FlowPanel
-          :renda="totalRendaCiclo"
-          :comprometido="plannerComprometido"
-          :aportes="totalAportesMetaCiclo"
-          :livre="livre"
-          :is-hidden="valoresOcultos"
-        />
+          <FlowPanel
+            v-else-if="id === 'flow'"
+            :renda="totalRendaCiclo"
+            :comprometido="plannerComprometido"
+            :aportes="totalAportesMetaCiclo"
+            :livre="livre"
+            :is-hidden="valoresOcultos"
+          />
 
-        <GoalsPanel
-          ref="goalsPanelRef"
-          :metas="metas"
-          :is-hidden="valoresOcultos"
-          @add-goal="(g) => addMeta(g.nome, g.alvo)"
-          @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, defaultEntryDate)"
-          @remove="removeMeta"
-        />
-      </section>
+          <GoalsPanel
+            v-else-if="id === 'goals'"
+            ref="goalsPanelRef"
+            :metas="metas"
+            :is-hidden="valoresOcultos"
+            @add-goal="(g) => addMeta(g.nome, g.alvo, g.inicial)"
+            @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, defaultEntryDate)"
+            @remove="removeMeta"
+          />
 
-      <!-- Linha 2: Preciso pagar · Planejo gastar -->
-      <section class="mid-content">
-        <BillsPanel
-          :fixed="fixedCiclo"
-          :installments="installmentsCiclo"
-          :one-time="oneTimeCiclo"
-          :paid-ids="fixedPaidIds"
-          :invoice-paid="invoicePaid"
-          :total-installments="totalInstallments"
-          :total-one-time="totalOneTime"
-          :total-invoice="totalInvoice"
-          :total-contas="plannerComprometido"
-          :total-pago="totalPago"
-          :restante="plannerRestante"
-          :is-hidden="valoresOcultos"
-          @add-fixed="(p) => addFixed(p.name, p.amount, p.day)"
-          @add-installment="(p) => addInstallment(p.name, p.amount, p.parcelaAtual, p.parcelaTotal)"
-          @add-onetime="(p) => addOneTime(p.name, p.amount)"
-          @set-amount="(p) => setAmount(p.kind, p.id, p.amount)"
-          @toggle-fixed-paid="toggleFixedPaid"
-          @toggle-invoice-paid="toggleInvoicePaid"
-          @remove="requestRemove"
-        />
+          <BillsPanel
+            v-else-if="id === 'bills'"
+            :fixed="fixedCiclo"
+            :installments="installmentsCiclo"
+            :one-time="oneTimeCiclo"
+            :paid-ids="fixedPaidIds"
+            :invoice-paid="invoicePaid"
+            :total-installments="totalInstallments"
+            :total-one-time="totalOneTime"
+            :total-invoice="totalInvoice"
+            :total-contas="plannerComprometido"
+            :total-pago="totalPago"
+            :restante="plannerRestante"
+            :is-hidden="valoresOcultos"
+            @add-fixed="(p) => addFixed(p.name, p.amount, p.day)"
+            @add-installment="(p) => addInstallment(p.name, p.amount, p.parcelaAtual, p.parcelaTotal)"
+            @add-onetime="(p) => addOneTime(p.name, p.amount)"
+            @set-amount="(p) => setAmount(p.kind, p.id, p.amount)"
+            @toggle-fixed-paid="toggleFixedPaid"
+            @toggle-invoice-paid="toggleInvoicePaid"
+            @remove="requestRemove"
+          />
 
-        <SpendPanel
-          :budgets="budgetsCiclo"
-          :teto="livre"
-          :gasto="totalGasto"
-          :total-budget="totalBudget"
-          :is-hidden="valoresOcultos"
-          @add-budget="(p) => addBudget(p.name, p.limit)"
-          @launch-spend="(p) => launchSpend(p.id, p.amount)"
-          @set-limit="(p) => setBudgetLimit(p.id, p.limit)"
-          @remove="requestRemove"
-        />
-      </section>
+          <SpendPanel
+            v-else-if="id === 'spend'"
+            :budgets="budgetsCiclo"
+            :teto="livre"
+            :gasto="totalGasto"
+            :total-budget="totalBudget"
+            :is-hidden="valoresOcultos"
+            @add-budget="(p) => addBudget(p.name, p.limit)"
+            @launch-spend="(p) => launchSpend(p.id, p.amount)"
+            @set-limit="(p) => setBudgetLimit(p.id, p.limit)"
+            @remove="requestRemove"
+          />
 
-      <!-- Linha 3: Evolução · Transações · Assistente -->
-      <section class="bottom-content">
-        <EvolutionChart
-          :labels="evolution.labels"
-          :data="evolution.dados"
-          :subtitle="cycleLabel"
-          :is-hidden="valoresOcultos"
-        />
+          <EvolutionChart
+            v-else-if="id === 'evolution'"
+            :labels="evolution.labels"
+            :data="evolution.dados"
+            :subtitle="cycleLabel"
+            :is-hidden="valoresOcultos"
+          />
 
-        <TransactionsPanel
-          :transacoes="transacoes"
-          :is-hidden="valoresOcultos"
-          @clear="confirmClearTransacoes"
-          @remove="removeTransacao"
-        />
+          <TransactionsPanel
+            v-else-if="id === 'transactions'"
+            :transacoes="transacoes"
+            :is-hidden="valoresOcultos"
+            @clear="confirmClearTransacoes"
+            @remove="removeTransacao"
+          />
 
-        <AssistantPanel :suggestion="aiSuggestion" @simulado="goToSimulado" />
-      </section>
+          <AssistantPanel
+            v-else-if="id === 'assistant'"
+            :suggestion="aiSuggestion"
+            @simulado="goToSimulado"
+          />
+        </DashboardPanel>
+      </TransitionGroup>
 
       <!-- Rodapé de utilidades -->
       <div class="util-row">
-        <span class="util-note">Os painéis mostram o ciclo de {{ cycleLabel }} — use as setas no topo para navegar.</span>
+        <span class="util-note">
+          Ciclo de {{ cycleLabel }} · arraste a barra dos painéis para reordenar, ou minimize pelo botão.
+        </span>
         <button
           class="btn-outline util-danger"
           @click="confirmClearAll"
@@ -463,6 +507,14 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- Preview flutuante do painel sendo arrastado -->
+  <Teleport to="body">
+    <div v-if="dragId" class="panel-drag-preview" :style="previewStyle" aria-hidden="true">
+      <i class="fas fa-grip"></i>
+      <span>{{ preview.title }}</span>
+    </div>
+  </Teleport>
 
   <!-- Modal -->
   <Modal

@@ -61,8 +61,8 @@
 .summary-item {
   padding: 14px 16px;
   border-radius: 18px;
-  border: 1px solid rgba(176, 207, 240, 0.16);
-  background: rgba(95, 145, 204, 0.06);
+  border: 1px solid rgba(var(--rgb-border-soft), 0.16);
+  background: rgba(var(--rgb-brand), 0.06);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -84,7 +84,7 @@
 .summary-chart {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(176, 207, 240, 0.12);
+  border-top: 1px solid rgba(var(--rgb-border-soft), 0.12);
   display: grid;
   gap: 14px;
 }
