@@ -68,6 +68,7 @@ export function usePanelLayout(defaultOrder) {
     dragId.value = null
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
+    window.removeEventListener('pointercancel', onUp)
     document.body.classList.remove('dragging-panel')
     persist()
   }
@@ -85,6 +86,7 @@ export function usePanelLayout(defaultOrder) {
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
     document.body.classList.add('dragging-panel')
     e.preventDefault()
   }
