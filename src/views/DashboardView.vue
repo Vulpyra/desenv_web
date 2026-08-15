@@ -67,7 +67,7 @@ const panelSpanClass = {
   bills: 'span-3', spend: 'span-3',
   evolution: 'span-2', transactions: 'span-2', assistant: 'span-2'
 }
-const { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown } = usePanelLayout(DEFAULT_PANELS)
+const { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown, movePanel } = usePanelLayout(DEFAULT_PANELS)
 const previewStyle = computed(() => ({
   left: (preview.value.x - preview.value.ox) + 'px',
   top: (preview.value.y - preview.value.oy) + 'px',
@@ -393,15 +393,18 @@ onMounted(() => {
       <!-- Painéis reordenáveis / minimizáveis -->
       <TransitionGroup tag="div" class="panel-grid" name="dpanel">
         <DashboardPanel
-          v-for="id in order"
+          v-for="(id, index) in order"
           :key="id"
           :id="id"
           :title="panelTitles[id]"
           :minimized="isMinimized(id)"
           :is-dragging="dragId === id"
+          :is-first="index === 0"
+          :is-last="index === order.length - 1"
           :class="panelSpanClass[id]"
           @toggle="toggleMinimize(id)"
           @handledown="onHandleDown($event, id, panelTitles[id])"
+          @move="movePanel(id, $event)"
         >
           <IncomePanel
             v-if="id === 'income'"

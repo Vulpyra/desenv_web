@@ -45,6 +45,12 @@
   font-family: 'Plus Jakarta Sans', 'Trebuchet MS', sans-serif;
 }
 
+/* Cor sólida do canvas: se o scroll rápido no mobile não pintar a tempo, a área
+   aparece escura (em vez de branca) */
+html {
+  background-color: var(--bg-deep);
+}
+
 body {
   background:
     radial-gradient(circle at 10% 15%, rgba(var(--rgb-glow), 0.17), transparent 32%),

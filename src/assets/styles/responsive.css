@@ -802,3 +802,33 @@
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Otimizações de performance para mobile / telas pequenas
+   - remove o backdrop-filter do container (o mais pesado que restou)
+   - esconde as partículas e para a animação dos orbs (repaint contínuo)
+   Isso corrige a lentidão e o "flash branco" ao rolar rápido.
+   ========================================================================== */
+@media (max-width: 900px) {
+  .dashboard {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .particle-stream,
+  .dashboard-shell::before,
+  .dashboard-shell::after,
+  .noise-layer {
+    display: none;
+  }
+
+  .glow {
+    animation: none;
+    filter: blur(36px);
+  }
+
+  /* Menos um orb pintado no fundo */
+  .orb-c {
+    display: none;
+  }
+}

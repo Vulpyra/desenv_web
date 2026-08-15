@@ -1383,7 +1383,6 @@
   background: rgba(var(--rgb-surface-deep), 0.4);
   border: 1px solid rgba(var(--rgb-border), 0.14);
   cursor: grab;
-  touch-action: none;
   user-select: none;
   transition: border-color 0.2s, background 0.2s;
 }
@@ -1432,11 +1431,37 @@
   letter-spacing: 0.02em;
 }
 
+.dpanel-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .dpanel-grip {
   color: var(--text-soft);
   opacity: 0.5;
   font-size: 0.8rem;
   flex-shrink: 0;
+}
+
+/* Setas de reordenar (só aparecem no touch; no desktop usa-se arraste) */
+.dpanel-reorder {
+  display: none;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+@media (pointer: coarse) {
+  .dpanel-reorder {
+    display: inline-flex;
+  }
+
+  .dpanel-grip {
+    display: none;
+  }
+
+  .dpanel-bar {
+    cursor: default;
+  }
 }
 
 .dpanel-slot {

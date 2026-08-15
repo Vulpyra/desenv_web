@@ -40,9 +40,17 @@ export function usePanelLayout(defaultOrder) {
     persist()
   }
 
-  const onMove = (e) => {
-    if (!dragId.value) return
+  // O trabalho pesado do arraste (elementFromPoint força layout) roda no máximo
+  // uma vez por frame via requestAnimationFrame, evitando travar em pointermove.
+  let rafId = null
+  let lastEvent = null
+
+  const processMove = () => {
+    rafId = null
+    const e = lastEvent
+    if (!e || !dragId.value) return
     preview.value = { ...preview.value, x: e.clientX, y: e.clientY }
+
     const el = document.elementFromPoint(e.clientX, e.clientY)
     const target = el && el.closest ? el.closest('[data-panel-id]') : null
     if (!target) return
@@ -64,8 +72,16 @@ export function usePanelLayout(defaultOrder) {
     if (changed) order.value = without
   }
 
+  const onMove = (e) => {
+    if (!dragId.value) return
+    lastEvent = e
+    if (rafId == null) rafId = requestAnimationFrame(processMove)
+  }
+
   const onUp = () => {
     dragId.value = null
+    if (rafId != null) { cancelAnimationFrame(rafId); rafId = null }
+    lastEvent = null
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
     window.removeEventListener('pointercancel', onUp)
@@ -74,6 +90,8 @@ export function usePanelLayout(defaultOrder) {
   }
 
   const onHandleDown = (e, id, title) => {
+    // No touch o reordenar é por botões (setas), evitando conflito com o scroll
+    if (e.pointerType === 'touch') return
     if (e.button != null && e.button !== 0) return
     const panelEl = e.currentTarget?.closest?.('[data-panel-id]')
     if (!panelEl) return
@@ -91,5 +109,16 @@ export function usePanelLayout(defaultOrder) {
     e.preventDefault()
   }
 
-  return { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown }
+  // Reordenar por botão (mobile): move o painel ±1 na ordem
+  const movePanel = (id, dir) => {
+    const i = order.value.indexOf(id)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= order.value.length) return
+    const next = [...order.value]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    order.value = next
+    persist()
+  }
+
+  return { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown, movePanel }
 }
