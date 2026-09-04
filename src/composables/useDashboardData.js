@@ -458,13 +458,17 @@ export function useDashboardData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    // O valor já investido precisa ser PERSISTIDO; antes ia só para o estado
+    // local e sumia no refresh.
+    const atualInicial = Number(inicial) > 0 ? Number(inicial) : 0
+
     const { data, error: err } = await supabase
       .from('metas')
       .insert({
         usuario_id: user.id,
         nome,
         valor_alvo: alvo,
-        valor_atual: 0,
+        valor_atual: atualInicial,
         icone: 'fa-bullseye',
         cor1: 'var(--accent-sky)',
         cor2: 'var(--button-b)'
@@ -473,7 +477,7 @@ export function useDashboardData() {
       .single()
 
     if (err) { error.value = err.message; return }
-    metas.value.push({ ...data, alvo: data.valor_alvo, atual: inicial })
+    metas.value.push({ ...data, alvo: data.valor_alvo, atual: Number(data.valor_atual) })
   }
 
   const addDespesaMeta = async (metaId, metaNome, valor, data_lancamento) => {
@@ -633,10 +637,26 @@ export function useDashboardData() {
     metas.value = metas.value.filter(m => m.id !== id)
   }
 
+  // Remover uma transação DESFAZ o lançamento que a originou (antes só apagava a
+  // linha do histórico e o valor continuava contando). removeRenda/removeDespesa
+  // já cuidam de estornar metas e de limpar as transações relacionadas.
   const removeTransacao = async (id) => {
+    const t = transacoes.value.find(x => x.id === id)
+
+    if (t?.refId) {
+      if (t.tipo === 'renda') {
+        const existe = rendas.value.some(r => r.id === t.refId)
+        if (existe) return removeRenda(t.refId)
+      } else if (t.tipo === 'despesa') {
+        const existe = [...despesas.value, ...despesasAvulsas.value].some(d => d.id === t.refId)
+        if (existe) return removeDespesa(t.refId)
+      }
+    }
+
+    // Sem referência (ou já removida): apaga só o registro do histórico
     const { error: err } = await supabase.from('transacoes').delete().eq('id', id)
     if (err) { error.value = err.message; return }
-    transacoes.value = transacoes.value.filter(t => t.id !== id)
+    transacoes.value = transacoes.value.filter(t2 => t2.id !== id)
   }
 
   const clearDespesas = async () => {

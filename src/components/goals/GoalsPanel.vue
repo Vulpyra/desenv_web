@@ -2,15 +2,26 @@
 import { ref, computed } from 'vue'
 import GoalItem from './GoalItem.vue'
 import GoalModal from './GoalModal.vue'
+import GoalInvestmentsModal from './GoalInvestmentsModal.vue'
 import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
 import { useCurrency } from '@/composables/useCurrency'
 
 const props = defineProps({
   metas: Array,
-  isHidden: Boolean
+  isHidden: Boolean,
+  aportes: { type: Array, default: () => [] },
+  cycleLabel: { type: String, default: '' }
 })
 
-defineEmits(['add-goal', 'invest', 'remove'])
+defineEmits(['add-goal', 'invest', 'remove', 'remove-aporte'])
+
+// Aportes do ciclo da meta aberta no modal
+const investTarget = ref(null)
+const aportesDaMeta = computed(() =>
+  investTarget.value
+    ? props.aportes.filter((a) => a.meta_id === investTarget.value.id)
+    : []
+)
 
 const { formatCurrency } = useCurrency()
 
@@ -83,6 +94,7 @@ const ringOffset = computed(() =>
         :is-hidden="isHidden"
         @remove="$emit('remove', $event)"
         @invest="$emit('invest', $event)"
+        @show-investments="investTarget = $event"
       />
       <p v-if="metas.length === 0" style="color: var(--text-soft); font-size: 0.9rem; text-align: center">
         Nenhuma meta cadastrada.
@@ -95,6 +107,16 @@ const ringOffset = computed(() =>
       @close="showModal = false"
       @add-goal="$emit('add-goal', $event)"
       @invest="$emit('invest', $event)"
+    />
+
+    <GoalInvestmentsModal
+      :is-open="!!investTarget"
+      :meta="investTarget"
+      :aportes="aportesDaMeta"
+      :cycle-label="cycleLabel"
+      :is-hidden="isHidden"
+      @close="investTarget = null"
+      @remove="$emit('remove-aporte', $event)"
     />
   </div>
 </template>

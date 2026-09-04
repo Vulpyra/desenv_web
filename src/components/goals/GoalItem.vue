@@ -9,7 +9,7 @@ const props = defineProps({
   isHidden: Boolean
 })
 
-const emit = defineEmits(['remove', 'invest'])
+const emit = defineEmits(['remove', 'invest', 'show-investments'])
 
 const porcentagem = computed(() => {
   if (!props.meta.alvo || props.meta.alvo <= 0) return '0.0'
@@ -33,6 +33,13 @@ const commitInvest = () => {
         {{ meta.nome }}
       </span>
       <span class="goal-pct">{{ porcentagem }}%</span>
+      <button
+        class="btn-icon-sub"
+        title="Ver e desfazer aportes deste ciclo"
+        @click="$emit('show-investments', meta)"
+      >
+        <i class="fas fa-list-ul"></i>
+      </button>
       <button class="btn-remove" @click="$emit('remove', meta.id)" title="Remover">
         <i class="fas fa-times"></i>
       </button>

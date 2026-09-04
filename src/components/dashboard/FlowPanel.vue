@@ -8,32 +8,40 @@ const props = defineProps({
   renda: Number,
   comprometido: Number,
   aportes: Number,
+  planejado: { type: Number, default: 0 },
   livre: Number,
   isHidden: Boolean
 })
 
 const { formatCurrency } = useCurrency()
 
+// O planejado (no débito) é uma reserva dentro do dinheiro livre
+const livreRestante = computed(() => props.livre - Math.max(props.planejado, 0))
+
 const chartData = computed(() => {
   const c = Math.max(props.comprometido, 0)
   const a = Math.max(props.aportes, 0)
-  const l = Math.max(props.livre, 0)
-  if (c === 0 && a === 0 && l === 0) return [1]
-  return [c, a, l]
+  const p = Math.max(props.planejado, 0)
+  const l = Math.max(livreRestante.value, 0)
+  if (c === 0 && a === 0 && p === 0 && l === 0) return [1]
+  return [c, a, p, l]
 })
 
 const chartLabels = computed(() =>
-  chartData.value.length === 1 ? ['Sem dados'] : ['Comprometido', 'Metas', 'Livre']
+  chartData.value.length === 1 ? ['Sem dados'] : ['Comprometido', 'Metas', 'Planejado', 'Livre']
 )
 
 const chartColors = computed(() =>
-  chartData.value.length === 1 ? ['--glass-border'] : ['--danger-soft', '--accent-sky', '--accent-cyan']
+  chartData.value.length === 1
+    ? ['--glass-border']
+    : ['--danger-soft', '--accent-sky', '--chart-a', '--accent-cyan']
 )
 
 const legend = computed(() => [
   { nome: 'Comprometido', valor: props.comprometido, colorVar: '--danger-soft' },
   { nome: 'Metas', valor: props.aportes, colorVar: '--accent-sky' },
-  { nome: 'Livre', valor: props.livre, colorVar: '--accent-cyan' }
+  { nome: 'Planejado', valor: props.planejado, colorVar: '--chart-a' },
+  { nome: 'Livre', valor: livreRestante.value, colorVar: '--accent-cyan' }
 ])
 </script>
 

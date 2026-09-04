@@ -20,6 +20,7 @@ watch(() => props.isOpen, (open) => {
   if (open) {
     novoNome.value = ''
     novoAlvoRaw.value = ''
+    valorInicial.value = ''
     investValues.value = {}
   }
 })
@@ -47,6 +48,7 @@ const handleAddGoal = () => {
   emit('add-goal', { nome, alvo, inicial })
   novoNome.value = ''
   novoAlvoRaw.value = ''
+  valorInicial.value = ''
 }
 
 const handleInvest = (meta) => {

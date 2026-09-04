@@ -3,7 +3,7 @@ import { ref } from 'vue'
 //Gerencia o reordenamento sob demanda de cada painel no dashboard.
 const STORAGE = 'rf_panelLayout_v1'
 
-export function usePanelLayout(defaultOrder) {
+export function usePanelLayout(defaultOrder, defaultTitles = {}) {
   const loadSaved = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE)) || {} } catch { return {} }
   }
@@ -19,6 +19,7 @@ export function usePanelLayout(defaultOrder) {
 
   const order = ref(reconcile(saved.order))
   const minimized = ref(new Set(saved.minimized || []))
+  const titles = ref({ ...(saved.titles || {}) })
   const dragId = ref(null)
   const preview = ref({ x: 0, y: 0, ox: 0, oy: 0, w: 0, h: 0, title: '' })
 
@@ -26,9 +27,26 @@ export function usePanelLayout(defaultOrder) {
     try {
       localStorage.setItem(
         STORAGE,
-        JSON.stringify({ order: order.value, minimized: [...minimized.value] })
+        JSON.stringify({
+          order: order.value,
+          minimized: [...minimized.value],
+          titles: titles.value
+        })
       )
     } catch { /* armazenamento indisponível */ }
+  }
+
+  // ---- Títulos personalizados ----
+  const titleOf = (id) => titles.value[id] || defaultTitles[id] || id
+
+  /** Renomeia um painel. Nome vazio volta ao título padrão. */
+  const renamePanel = (id, name) => {
+    const clean = String(name || '').trim().slice(0, 40)
+    const next = { ...titles.value }
+    if (!clean || clean === defaultTitles[id]) delete next[id]
+    else next[id] = clean
+    titles.value = next
+    persist()
   }
 
   const isMinimized = (id) => minimized.value.has(id)
@@ -120,5 +138,8 @@ export function usePanelLayout(defaultOrder) {
     persist()
   }
 
-  return { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown, movePanel }
+  return {
+    order, dragId, preview, isMinimized, toggleMinimize, onHandleDown, movePanel,
+    titles, titleOf, renamePanel
+  }
 }

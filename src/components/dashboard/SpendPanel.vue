@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useCurrency } from '@/composables/useCurrency'
 import GlossaryTerm from '@/components/common/GlossaryTerm.vue'
+import AddForm from '@/components/common/AddForm.vue'
 
 const props = defineProps({
   budgets: { type: Array, default: () => [] },
@@ -37,13 +38,29 @@ const commitLaunch = (id) => {
   launchVals.value = { ...launchVals.value, [id]: '' }
 }
 
-// Ghost add
+// Nova despesa planejada (débito ou crédito parcelado)
 const plName = ref(''); const plVal = ref('')
+const plPagamento = ref('debito'); const plParcelas = ref('1')
+
+const parcelaPreview = computed(() => {
+  if (plPagamento.value !== 'credito') return null
+  const total = parseLoose(plVal.value)
+  const n = Math.min(Math.max(parseInt(plParcelas.value, 10) || 1, 1), 60)
+  if (!total) return null
+  return `${n}x de ${formatCurrency(Math.round((total / n) * 100) / 100)} na fatura`
+})
+
 const commitBudget = () => {
   const name = plName.value.trim()
   if (!name) return
-  emit('add-budget', { name, limit: parseLoose(plVal.value) })
+  emit('add-budget', {
+    name,
+    limit: parseLoose(plVal.value),
+    pagamento: plPagamento.value,
+    parcelas: parseInt(plParcelas.value, 10) || 1
+  })
   plName.value = ''; plVal.value = ''
+  plPagamento.value = 'debito'; plParcelas.value = '1'
 }
 </script>
 
@@ -101,7 +118,12 @@ const commitBudget = () => {
     <div class="budget-list">
       <div v-for="b in budgets" :key="b.id" class="budget-row">
         <div class="budget-head">
-          <span class="budget-name">{{ b.name }}</span>
+          <span class="budget-name">
+            {{ b.name }}
+            <span v-if="b.pagamento === 'credito'" class="pay-tag" title="Vira parcela na fatura do cartão">
+              <i class="fas fa-credit-card"></i> {{ b.parcelas }}x
+            </span>
+          </span>
           <button
             class="btn-remove"
             @click="$emit('remove', { plannerKind: 'budget', id: b.id, nome: b.name })"
@@ -142,12 +164,30 @@ const commitBudget = () => {
       <p v-if="budgets.length === 0" class="panel-empty">Nenhuma categoria planejada neste ciclo.</p>
     </div>
 
-    <div class="ghost-row">
-      <div class="gh-plus">+</div>
-      <input class="gh-name" v-model="plName" placeholder="Nova categoria" @keydown.enter="commitBudget" />
-      <input class="gh-amt num" v-model="plVal" inputmode="decimal" placeholder="orçado" @keydown.enter="commitBudget" />
-      <button class="gh-commit" @click="commitBudget" title="Adicionar"><i class="fas fa-check"></i></button>
-    </div>
+    <AddForm title="Nova despesa planejada" submit-label="Adicionar despesa" @submit="commitBudget">
+      <label class="add-field add-field--grow">
+        <span class="add-label">Descrição</span>
+        <input v-model="plName" placeholder="Ex.: Mercado" @keydown.enter="commitBudget" />
+      </label>
+      <label class="add-field add-field--md">
+        <span class="add-label">Valor (R$)</span>
+        <input v-model="plVal" class="num" inputmode="decimal" placeholder="0,00" @keydown.enter="commitBudget" />
+      </label>
+      <label class="add-field add-field--md">
+        <span class="add-label">Pagamento</span>
+        <select v-model="plPagamento">
+          <option value="debito">Débito</option>
+          <option value="credito">Crédito</option>
+        </select>
+      </label>
+      <label v-if="plPagamento === 'credito'" class="add-field add-field--sm">
+        <span class="add-label">Parcelas</span>
+        <input v-model="plParcelas" inputmode="numeric" placeholder="1" @keydown.enter="commitBudget" />
+      </label>
+      <p v-if="parcelaPreview" class="add-note">
+        <i class="fas fa-credit-card"></i> {{ parcelaPreview }}
+      </p>
+    </AddForm>
 
     <div class="panel-foot">
       <span class="foot-label">Total orçado</span>

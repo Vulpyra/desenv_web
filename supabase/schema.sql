@@ -130,7 +130,9 @@ create table if not exists public.simulados (
 --  3. PLANNER TABLES  (recurring bills, installments, one-off buys, budgets)
 -- ============================================================================
 
--- Contas fixas (recur from ciclo_inicio through ciclo_fim; null = no end)
+-- Contas fixas (recur from ciclo_inicio through ciclo_fim; null = no end).
+-- tipo = 'conta' (contas fixas) ou 'assinatura' (mensalidades dentro da fatura
+-- do cartão) — mesma recorrência, seções diferentes (ver migration 004).
 create table if not exists public.planner_contas_fixas (
   id           uuid primary key default gen_random_uuid(),
   usuario_id   uuid not null references auth.users(id) on delete cascade,
@@ -138,12 +140,15 @@ create table if not exists public.planner_contas_fixas (
   valor        numeric(12,2) not null default 0,
   dia          smallint not null default 1,
   essencial    boolean not null default true,
+  tipo         text not null default 'conta',
   ciclo_inicio integer not null,
   ciclo_fim    integer,
   criado_em    timestamptz not null default now()
 );
 
--- Parcelas do cartão (parcela atual = ciclo_atual - ciclo_inicio + 1)
+-- Parcelas do cartão (parcela atual = ciclo_atual - ciclo_inicio + 1).
+-- data/categoria/fingerprint são preenchidos pela importação de CSV;
+-- fingerprint é a chave de deduplicação (ver migration 002).
 create table if not exists public.planner_parcelas (
   id             uuid primary key default gen_random_uuid(),
   usuario_id     uuid not null references auth.users(id) on delete cascade,
@@ -151,30 +156,59 @@ create table if not exists public.planner_parcelas (
   valor          numeric(12,2) not null default 0,
   ciclo_inicio   integer not null,
   total_parcelas smallint not null default 1,
+  data           date,
+  categoria      text,
+  fingerprint    text,
+  -- quando a parcela nasce de uma despesa planejada no crédito
+  -- (a FK é adicionada abaixo, depois de planner_categorias existir)
+  categoria_id   uuid,
   criado_em      timestamptz not null default now()
 );
 
--- Compras únicas (only appear in the cycle they were entered)
+-- Compras únicas (only appear in the cycle they were entered).
+-- pagamento = 'credito' (entra na fatura) ou 'debito' (sai direto da conta,
+-- reduz o livre mas não é "a pagar") — ver migration 006.
 create table if not exists public.planner_compras_unicas (
-  id         uuid primary key default gen_random_uuid(),
-  usuario_id uuid not null references auth.users(id) on delete cascade,
-  nome       text not null,
-  valor      numeric(12,2) not null default 0,
-  ciclo      integer not null,
-  criado_em  timestamptz not null default now()
+  id          uuid primary key default gen_random_uuid(),
+  usuario_id  uuid not null references auth.users(id) on delete cascade,
+  nome        text not null,
+  valor       numeric(12,2) not null default 0,
+  ciclo       integer not null,
+  pagamento   text not null default 'credito',
+  data        date,
+  categoria   text,
+  fingerprint text,
+  criado_em   timestamptz not null default now()
 );
 
 -- Categorias de gasto planejado (recur; teto = per-cycle limit)
+-- pagamento = 'debito' (sai do dinheiro livre) ou 'credito' (também vira parcela
+-- na fatura, ligada por planner_parcelas.categoria_id) — ver migration 005.
 create table if not exists public.planner_categorias (
   id           uuid primary key default gen_random_uuid(),
   usuario_id   uuid not null references auth.users(id) on delete cascade,
   nome         text not null,
   teto         numeric(12,2) not null default 0,
   essencial    boolean not null default false,
+  pagamento    text not null default 'debito',
+  parcelas     smallint,
   ciclo_inicio integer not null,
   ciclo_fim    integer,
   criado_em    timestamptz not null default now()
 );
+
+-- Liga a parcela à despesa planejada no crédito que a originou (declarada aqui
+-- porque planner_parcelas é criada antes de planner_categorias).
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'planner_parcelas_categoria_id_fkey'
+  ) then
+    alter table public.planner_parcelas
+      add constraint planner_parcelas_categoria_id_fkey
+      foreign key (categoria_id) references public.planner_categorias(id) on delete cascade;
+  end if;
+end $$;
 
 -- Gasto lançado por categoria e ciclo (one row per categoria+ciclo)
 create table if not exists public.planner_categoria_gastos (
@@ -201,6 +235,16 @@ create table if not exists public.planner_faturas_pagas (
   primary key (usuario_id, ciclo)
 );
 
+-- Ciclo de faturamento do cartão (fecha dia X, vence dia Y). Quando usar_ciclo
+-- é false, cada compra cai no ciclo da própria data (ver migration 003).
+create table if not exists public.planner_cartao (
+  usuario_id     uuid primary key references auth.users(id) on delete cascade,
+  usar_ciclo     boolean  not null default false,
+  dia_fechamento smallint not null default 15,
+  dia_vencimento smallint not null default 22,
+  atualizado_em  timestamptz not null default now()
+);
+
 -- ============================================================================
 --  4. INDEXES  (owner lookups)
 -- ============================================================================
@@ -213,12 +257,19 @@ create index if not exists idx_transacoes_ref               on public.transacoes
 create index if not exists idx_patrimonio_usuario           on public.patrimonio_historico(usuario_id);
 create index if not exists idx_simulados_usuario            on public.simulados(usuario_id);
 create index if not exists idx_pl_contas_fixas_usuario      on public.planner_contas_fixas(usuario_id);
+create index if not exists idx_pl_contas_fixas_tipo         on public.planner_contas_fixas(usuario_id, tipo);
 create index if not exists idx_pl_parcelas_usuario          on public.planner_parcelas(usuario_id);
 create index if not exists idx_pl_compras_unicas_usuario    on public.planner_compras_unicas(usuario_id);
 create index if not exists idx_pl_categorias_usuario        on public.planner_categorias(usuario_id);
 create index if not exists idx_pl_categoria_gastos_usuario  on public.planner_categoria_gastos(usuario_id);
 create index if not exists idx_pl_contas_pagas_usuario      on public.planner_contas_pagas(usuario_id);
 create index if not exists idx_pl_faturas_pagas_usuario     on public.planner_faturas_pagas(usuario_id);
+
+-- Deduplicação da importação de CSV: parcial, para não afetar itens manuais (fingerprint nulo)
+create unique index if not exists ux_planner_compras_unicas_fingerprint
+  on public.planner_compras_unicas (usuario_id, fingerprint) where fingerprint is not null;
+create unique index if not exists ux_planner_parcelas_fingerprint
+  on public.planner_parcelas (usuario_id, fingerprint) where fingerprint is not null;
 
 -- ============================================================================
 --  5. ROW LEVEL SECURITY  (each user only sees their own rows)
@@ -238,6 +289,7 @@ alter table public.planner_categorias        enable row level security;
 alter table public.planner_categoria_gastos  enable row level security;
 alter table public.planner_contas_pagas      enable row level security;
 alter table public.planner_faturas_pagas     enable row level security;
+alter table public.planner_cartao            enable row level security;
 
 -- profiles are keyed by id (= auth.uid()); everything else by usuario_id.
 drop policy if exists profiles_owner on public.profiles;
@@ -326,6 +378,10 @@ create policy planner_contas_pagas_owner on public.planner_contas_pagas
 
 drop policy if exists planner_faturas_pagas_owner on public.planner_faturas_pagas;
 create policy planner_faturas_pagas_owner on public.planner_faturas_pagas
+  for all using (auth.uid() = usuario_id) with check (auth.uid() = usuario_id);
+
+drop policy if exists planner_cartao_owner on public.planner_cartao;
+create policy planner_cartao_owner on public.planner_cartao
   for all using (auth.uid() = usuario_id) with check (auth.uid() = usuario_id);
 
 -- ============================================================================

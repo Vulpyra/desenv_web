@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { ref, nextTick } from 'vue'
+
+const props = defineProps({
   id: { type: String, required: true },
   title: { type: String, default: '' },
   minimized: Boolean,
@@ -8,12 +10,34 @@ defineProps({
   isLast: Boolean
 })
 
-const emit = defineEmits(['toggle', 'handledown', 'move'])
+const emit = defineEmits(['toggle', 'handledown', 'move', 'rename'])
 
 // Só inicia o arraste com o botão principal do mouse (touch é ignorado no composable)
 const onBarDown = (e) => {
+  if (editing.value) return
   emit('handledown', e)
 }
+
+// ---- Renomear painel ----
+const editing = ref(false)
+const draft = ref('')
+const inputRef = ref(null)
+
+const startEdit = async () => {
+  draft.value = props.title
+  editing.value = true
+  await nextTick()
+  inputRef.value?.focus()
+  inputRef.value?.select()
+}
+
+const commit = () => {
+  if (!editing.value) return
+  editing.value = false
+  if (draft.value.trim() !== props.title) emit('rename', draft.value)
+}
+
+const cancel = () => { editing.value = false }
 </script>
 
 <template>
@@ -31,7 +55,37 @@ const onBarDown = (e) => {
       >
         <i class="fas" :class="minimized ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
       </button>
-      <span class="dpanel-name">{{ title }}</span>
+
+      <input
+        v-if="editing"
+        ref="inputRef"
+        v-model="draft"
+        class="dpanel-rename"
+        maxlength="40"
+        placeholder="Nome do painel"
+        @pointerdown.stop
+        @click.stop
+        @keydown.enter.prevent="commit"
+        @keydown.esc.prevent="cancel"
+        @blur="commit"
+      />
+      <span
+        v-else
+        class="dpanel-name"
+        title="Clique duas vezes para renomear"
+        @dblclick.stop="startEdit"
+      >{{ title }}</span>
+
+      <button
+        v-if="!editing"
+        class="dpanel-btn"
+        title="Renomear painel"
+        aria-label="Renomear painel"
+        @pointerdown.stop
+        @click.stop="startEdit"
+      >
+        <i class="fas fa-pen"></i>
+      </button>
 
       <!-- Reordenar por setas (mobile / touch) -->
       <span class="dpanel-reorder">

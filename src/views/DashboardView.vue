@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardData } from '@/composables/useDashboardData'
 import { usePlanner } from '@/composables/usePlanner'
+import { invoicePeriodForCycle, addMonthsISO, dueDateOf } from '@/utils/invoiceCycle'
 import { usePanelLayout } from '@/composables/usePanelLayout'
 import { useModal } from '@/composables/useModal'
 import { useCurrency } from '@/composables/useCurrency'
@@ -15,12 +16,18 @@ import IncomePanel from '@/components/dashboard/IncomePanel.vue'
 import FlowPanel from '@/components/dashboard/FlowPanel.vue'
 import BillsPanel from '@/components/dashboard/BillsPanel.vue'
 import SpendPanel from '@/components/dashboard/SpendPanel.vue'
+import QuickExpensePanel from '@/components/dashboard/QuickExpensePanel.vue'
 import AssistantPanel from '@/components/dashboard/AssistantPanel.vue'
 import EvolutionChart from '@/components/charts/EvolutionChart.vue'
 import GoalsPanel from '@/components/goals/GoalsPanel.vue'
 import TransactionsPanel from '@/components/transactions/TransactionsPanel.vue'
 import EditEntryModal from '@/components/dashboard/EditEntryModal.vue'
 import Modal from '@/components/Modal.vue'
+
+// Carregado sob demanda: o importador (e o parser de CSV) não pesam no bundle inicial
+const ImportInvoiceModal = defineAsyncComponent(() =>
+  import('@/components/dashboard/ImportInvoiceModal.vue')
+)
 
 const router = useRouter()
 const { signOut } = useAuth()
@@ -29,45 +36,104 @@ const { signOut } = useAuth()
 const { formatCurrency } = useCurrency()
 const {
   rendas, metas, transacoes,
-  rendasCiclo, totalRendaCiclo, totalAportesMetaCiclo,
-  selectedCycle, selectedCycleIndex, labelForCycleIndex, rendaTotalAt, earliestRendaCycle,
+  rendasCiclo, totalRendaCiclo, totalAportesMetaCiclo, aportesMetaCiclo,
+  selectedCycle, selectedCycleIndex, labelForCycleIndex, cycleIndexOf, rendaTotalAt, earliestRendaCycle,
   cycleLabel, isCurrentCycle, prevCycle, nextCycle, resetCycle,
   error: dashError,
   load, addRenda, addMeta, addDespesaMeta,
-  getUniqueName, updateRenda, removeRenda, removeMeta, removeTransacao,
+  getUniqueName, updateRenda, removeRenda, removeDespesa, removeMeta, removeTransacao,
   clearAll, clearTransacoes
 } = useDashboardData()
 
 // Estado (Supabase): contas fixas recorrentes, parcelas, compras únicas, categorias de gasto
 const {
-  fixedCiclo, installmentsCiclo, oneTimeCiclo, budgetsCiclo,
-  totalInstallments, totalOneTime, totalInvoice, comprometido: plannerComprometido,
-  totalBudget, totalGasto, fixedPaidIds, invoicePaid, totalPago, restante: plannerRestante,
+  fixedCiclo, subscriptionsCiclo, installmentsCiclo, oneTimeCiclo, debitsCiclo, budgetsCiclo,
+  totalSubscriptions, totalInstallments, totalOneTime, totalDebits, totalInvoice,
+  aPagar, comprometido: plannerComprometido,
+  totalBudget, totalBudgetDebito, totalGasto, fixedPaidIds, invoicePaid, totalPago, restante: plannerRestante,
   comprometidoAt, gastoAt, earliestIndex, hasFixed, hasBudgets,
-  addFixed, addInstallment, addOneTime, addBudget,
+  addFixed, addSubscription, convertToSubscription, addInstallment, addOneTime, addBudget,
   setAmount, setBudgetLimit, launchSpend,
   toggleFixedPaid, toggleInvoicePaid,
-  removeFixed, removeInstallment, removeOneTime, removeBudget,
+  removeFixed, removeInstallment, removeOneTime, removeBudget, importEntries, clearBills,
+  addQuickExpense,
+  card, saveCardConfig,
   load: loadPlanner, error: plannerError, clear: clearPlanner
-} = usePlanner(selectedCycleIndex)
+} = usePlanner(selectedCycleIndex, cycleIndexOf)
+
+// Período da fatura que vence dentro do ciclo visualizado (ex.: 15/07 a 14/08)
+const invoicePeriod = computed(() => {
+  if (!card.value.enabled) return null
+  return invoicePeriodForCycle(
+    selectedCycle.value.start, selectedCycle.value.end,
+    card.value.closingDay, card.value.dueDay
+  )
+})
+
+// ---- Importação de fatura (.csv) ----
+const showImportModal = ref(false)
+const importNotice = ref('')
+
+const handleImport = async (entries) => {
+  showImportModal.value = false
+  if (!entries?.length) return
+
+  // Cada lançamento vai para o ciclo da SUA data (não o ciclo visualizado). Com o
+  // ciclo do cartão ativo, o que decide é o vencimento da fatura — então uma fatura
+  // que vai de 15/07 a 14/08 entra inteira no ciclo em que é paga.
+  const { makeFingerprint } = await import('@/utils/csvImport')
+
+  const toCycle = (iso) =>
+    card.value.enabled
+      ? cycleIndexOf(dueDateOf(iso, card.value.closingDay, card.value.dueDay))
+      : cycleIndexOf(iso)
+
+  const prepared = entries.map((e) => {
+    // Numa parcela, a compra original é (parcelaAtual - 1) meses antes
+    const purchaseDate = e.kind === 'installment'
+      ? addMonthsISO(e.date, -((e.parcelaAtual || 1) - 1))
+      : e.date
+    return {
+      ...e,
+      purchaseDate,
+      cycle: toCycle(purchaseDate),
+      fingerprint: makeFingerprint(e, purchaseDate)
+    }
+  })
+
+  const res = await importEntries(prepared)
+  if (res.failed) return
+
+  const cycleNames = res.cycles.map(labelForCycleIndex).join(', ')
+  const parts = [`${res.imported} lançamento(s) importado(s)`]
+  if (res.duplicates) parts.push(`${res.duplicates} já existia(m)`)
+  if (res.imported && cycleNames) parts.push(`ciclos: ${cycleNames}`)
+  importNotice.value = parts.join(' · ')
+  setTimeout(() => { importNotice.value = '' }, 6000)
+}
 
 // Fluxo do ciclo: livre = renda − comprometido − aportes em metas; teto de gasto = livre
 const livre = computed(() => totalRendaCiclo.value - plannerComprometido.value - totalAportesMetaCiclo.value)
 const restam = computed(() => livre.value - totalGasto.value)
 
 // ---- Layout: ordem/minimização/arraste dos painéis ----
-const DEFAULT_PANELS = ['income', 'flow', 'goals', 'bills', 'spend', 'evolution', 'transactions', 'assistant']
+const DEFAULT_PANELS = [
+  'income', 'flow', 'goals', 'quick', 'bills', 'spend', 'evolution', 'transactions', 'assistant'
+]
 const panelTitles = {
   income: 'Entradas', flow: 'Livre para gastar', goals: 'Metas Financeiras',
-  bills: 'Preciso pagar', spend: 'Planejo gastar', evolution: 'Evolução Patrimonial',
-  transactions: 'Transações', assistant: 'Assistente'
+  quick: 'Gasto rápido', bills: 'Preciso pagar', spend: 'Planejo gastar',
+  evolution: 'Evolução Patrimonial', transactions: 'Transações', assistant: 'Assistente'
 }
 const panelSpanClass = {
   income: 'span-2', flow: 'span-2', goals: 'span-2',
-  bills: 'span-3', spend: 'span-3',
+  quick: 'span-2', bills: 'span-3', spend: 'span-3',
   evolution: 'span-2', transactions: 'span-2', assistant: 'span-2'
 }
-const { order, dragId, preview, isMinimized, toggleMinimize, onHandleDown, movePanel } = usePanelLayout(DEFAULT_PANELS)
+const {
+  order, dragId, preview, isMinimized, toggleMinimize, onHandleDown, movePanel,
+  titleOf, renamePanel
+} = usePanelLayout(DEFAULT_PANELS, panelTitles)
 const previewStyle = computed(() => ({
   left: (preview.value.x - preview.value.ox) + 'px',
   top: (preview.value.y - preview.value.oy) + 'px',
@@ -135,6 +201,8 @@ const confirmDelete = () => {
 const doRemove = (item) => {
   switch (item.plannerKind) {
     case 'fixed': return removeFixed(item.id)
+    // Assinatura usa a mesma regra: deixa de ser cobrada deste ciclo em diante
+    case 'subscription': return removeFixed(item.id)
     case 'installment': return removeInstallment(item.id)
     case 'onetime': return removeOneTime(item.id)
     case 'budget': return removeBudget(item.id)
@@ -269,8 +337,21 @@ const handleConfirm = (values) => {
       if ((values[0] || '').trim().toUpperCase() !== 'SIM') return
       clearTransacoes()
       break
+    case 'confirmClearBills':
+      if ((values[0] || '').trim().toUpperCase() !== 'SIM') return
+      clearBills()
+      break
   }
   close()
+}
+
+// Apaga contas fixas, assinaturas e toda a fatura (de todos os ciclos).
+// Metas e categorias de gasto planejado não são afetadas.
+const confirmClearBills = () => {
+  modalAction.value = 'confirmClearBills'
+  open('Apagar contas fixas e fatura?', [
+    { placeholder: 'Digite SIM para confirmar' }
+  ])
 }
 
 const nameWarningFn = (val) => {
@@ -328,6 +409,12 @@ onMounted(() => {
 
   <div class="dashboard-shell">
     <span class="particle-stream" aria-hidden="true"></span>
+
+    <div v-if="importNotice" class="error-toast import-toast" @click="importNotice = ''">
+      <i class="fas fa-circle-check"></i>
+      {{ importNotice }}
+      <i class="fas fa-times" style="margin-left: auto"></i>
+    </div>
 
     <div v-if="dashError || plannerError" class="error-toast" @click="dashError = null; plannerError = null">
       <i class="fas fa-exclamation-circle"></i>
@@ -396,15 +483,16 @@ onMounted(() => {
           v-for="(id, index) in order"
           :key="id"
           :id="id"
-          :title="panelTitles[id]"
+          :title="titleOf(id)"
           :minimized="isMinimized(id)"
           :is-dragging="dragId === id"
           :is-first="index === 0"
           :is-last="index === order.length - 1"
           :class="panelSpanClass[id]"
           @toggle="toggleMinimize(id)"
-          @handledown="onHandleDown($event, id, panelTitles[id])"
+          @handledown="onHandleDown($event, id, titleOf(id))"
           @move="movePanel(id, $event)"
+          @rename="renamePanel(id, $event)"
         >
           <IncomePanel
             v-if="id === 'income'"
@@ -421,6 +509,7 @@ onMounted(() => {
             :renda="totalRendaCiclo"
             :comprometido="plannerComprometido"
             :aportes="totalAportesMetaCiclo"
+            :planejado="totalBudgetDebito"
             :livre="livre"
             :is-hidden="valoresOcultos"
           />
@@ -430,32 +519,53 @@ onMounted(() => {
             ref="goalsPanelRef"
             :metas="metas"
             :is-hidden="valoresOcultos"
+            :aportes="aportesMetaCiclo"
+            :cycle-label="cycleLabel"
+            @remove-aporte="removeDespesa"
             @add-goal="(g) => addMeta(g.nome, g.alvo, g.inicial)"
             @invest="(inv) => addDespesaMeta(inv.metaId, inv.metaNome, inv.amount, defaultEntryDate)"
             @remove="removeMeta"
           />
 
+          <QuickExpensePanel
+            v-else-if="id === 'quick'"
+            :debits="debitsCiclo"
+            :total-debits="totalDebits"
+            :is-hidden="valoresOcultos"
+            @add="addQuickExpense"
+            @remove="requestRemove"
+          />
+
           <BillsPanel
             v-else-if="id === 'bills'"
             :fixed="fixedCiclo"
+            :subscriptions="subscriptionsCiclo"
             :installments="installmentsCiclo"
             :one-time="oneTimeCiclo"
             :paid-ids="fixedPaidIds"
             :invoice-paid="invoicePaid"
+            :total-subscriptions="totalSubscriptions"
             :total-installments="totalInstallments"
             :total-one-time="totalOneTime"
             :total-invoice="totalInvoice"
-            :total-contas="plannerComprometido"
+            :total-contas="aPagar"
             :total-pago="totalPago"
             :restante="plannerRestante"
             :is-hidden="valoresOcultos"
             @add-fixed="(p) => addFixed(p.name, p.amount, p.day)"
+            @add-subscription="(p) => addSubscription(p.name, p.amount, p.day)"
+            @to-subscription="convertToSubscription"
+            @clear-bills="confirmClearBills"
             @add-installment="(p) => addInstallment(p.name, p.amount, p.parcelaAtual, p.parcelaTotal)"
             @add-onetime="(p) => addOneTime(p.name, p.amount)"
             @set-amount="(p) => setAmount(p.kind, p.id, p.amount)"
             @toggle-fixed-paid="toggleFixedPaid"
             @toggle-invoice-paid="toggleInvoicePaid"
             @remove="requestRemove"
+            @import="showImportModal = true"
+            :card="card"
+            :invoice-period="invoicePeriod"
+            @save-card="saveCardConfig"
           />
 
           <SpendPanel
@@ -465,7 +575,7 @@ onMounted(() => {
             :gasto="totalGasto"
             :total-budget="totalBudget"
             :is-hidden="valoresOcultos"
-            @add-budget="(p) => addBudget(p.name, p.limit)"
+            @add-budget="(p) => addBudget(p.name, p.limit, p.pagamento, p.parcelas)"
             @launch-spend="(p) => launchSpend(p.id, p.amount)"
             @set-limit="(p) => setBudgetLimit(p.id, p.limit)"
             @remove="requestRemove"
@@ -518,6 +628,14 @@ onMounted(() => {
       <span>{{ preview.title }}</span>
     </div>
   </Teleport>
+
+  <!-- Importação de fatura (.csv) -->
+  <ImportInvoiceModal
+    v-if="showImportModal"
+    :is-open="showImportModal"
+    @close="showImportModal = false"
+    @confirm="handleImport"
+  />
 
   <!-- Modal -->
   <Modal
